@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fight P2P - Boxing Betting Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 3px solid #ff0000;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #ffd700;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 2px 2px 4px rgba(255, 0, 0, 0.5);
+        }
+
+        .tagline {
+            color: #ff0000;
+            font-size: 1.2em;
+            margin-top: 10px;
+        }
+
+        .user-balance {
+            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+            color: #000;
+            padding: 15px 25px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: bold;
+        }
+
+        .balance-amount {
+            font-size: 2em;
+            color: #ff0000;
+        }
+
+        .fights-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.8em;
+            color: #ffd700;
+            margin-bottom: 20px;
+            padding-left: 15px;
+            border-left: 4px solid #ff0000;
+        }
+
+        .fight-card {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            border: 2px solid #333;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .fight-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .fight-date {
+            background: #ff0000;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .fighters {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .fighter {
+            text-align: center;
+            flex: 1;
+            min-width: 120px;
+            padding: 15px;
+        }
+
+        .fighter-photo {
+            font-size: 4em;
+            margin-bottom: 10px;
+        }
+
+        .fighter-name {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #ffd700;
+            margin-bottom: 5px;
+        }
+
+        .fighter-record {
+            color: #888;
+            font-size: 0.9em;
+        }
+
+        .vs {
+            font-size: 2em;
+            font-weight: bold;
+            color: #ff0000;
+            padding: 0 20px;
+            text-shadow: 2px 2px 4px rgba(255, 0, 0, 0.8);
+        }
+
+        .betting-section {
+            background: #0a0a0a;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .bet-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .bet-btn {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+        }
+
+        .bet-btn-fighter1 {
+            background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+            color: white;
+        }
+
+        .bet-btn-fighter2 {
+            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+            color: black;
+        }
+
+        .bet-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .bet-btn:active {
+            transform: translateY(0);
+        }
+
+        .current-bets {
+            margin-top: 15px;
+            padding: 15px;
+            background: #1a1a1a;
+            border-radius: 8px;
+        }
+
+        .bet-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #2a2a2a;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-upcoming {
+            color: #00ff00;
+        }
+
+        .status-live {
+            color: #ff0000;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            border-top: 2px solid #333;
+            margin-top: 40px;
+            color: #666;
+        }
+
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .fighters {
+                flex-direction: column;
+            }
+
+            .vs {
+                padding: 10px 0;
+            }
+
+            .bet-buttons {
+                flex-direction: column;
+            }
+
+            .bet-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🥊 Fight P2P</h1>
+            <p class="tagline">Peer-to-Peer Boxing Betting Arena</p>
+        </header>
+
+        <div class="user-balance">
+            <div>Your Balance</div>
+            <div class="balance-amount">1,000 Points</div>
+        </div>
+
+        <div class="fights-section">
+            <h2 class="section-title">🔥 Upcoming Fights</h2>
+
+            <div id="fights-container">
+                <!-- Fights will be loaded here -->
+            </div>
+        </div>
+
+        <footer>
+            <p>© 2026 Fight P2P - Bet Responsibly</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">Virtual Points System - No Real Money</p>
+        </footer>
+    </div>
+
+    <script>
+        let userPoints = 1000;
+
+        // Load fights from API
+        async function loadFights() {
+            try {
+                const response = await fetch('/api/fights');
+                const fights = await response.json();
+                displayFights(fights);
+            } catch (error) {
+                console.error('Error loading fights:', error);
+                // Display sample fights if API fails
+                displayFights(getSampleFights());
+            }
+        }
+
+        function getSampleFights() {
+            return [
+                {
+                    id: 1,
+                    fighter1: { name: 'Ethiopian Lion', record: '15-2-0', photo: '🦁' },
+                    fighter2: { name: 'African Thunder', record: '12-3-1', photo: '⚡' },
+                    date: '2026-11-15',
+                    status: 'upcoming',
+                    bets: []
+                },
+                {
+                    id: 2,
+                    fighter1: { name: 'Addis Warrior', record: '10-1-0', photo: '🛡️' },
+                    fighter2: { name: 'Nile Storm', record: '8-4-2', photo: '🌊' },
+                    date: '2026-11-20',
+                    status: 'upcoming',
+                    bets: []
+                }
+            ];
+        }
+
+        function displayFights(fights) {
+            const container = document.getElementById('fights-container');
+            container.innerHTML = '';
+
+            fights.forEach(fight => {
+                const fightCard = createFightCard(fight);
+                container.appendChild(fightCard);
+            });
+        }
+
+        function createFightCard(fight) {
+            const card = document.createElement('div');
+            card.className = 'fight-card';
+
+            const statusClass = fight.status === 'live' ? 'status-live' : 'status-upcoming';
+            const statusText = fight.status === 'live' ? '🔴 LIVE' : '📅 UPCOMING';
+
+            card.innerHTML = `
+                <div class="fight-header">
+                    <span class="${statusClass}">${statusText}</span>
+                    <span class="fight-date">${formatDate(fight.date)}</span>
+                </div>
+                <div class="fighters">
+                    <div class="fighter">
+                        <div class="fighter-photo">${fight.fighter1.photo}</div>
+                        <div class="fighter-name">${fight.fighter1.name}</div>
+                        <div class="fighter-record">${fight.fighter1.record}</div>
+                    </div>
+                    <div class="vs">VS</div>
+                    <div class="fighter">
+                        <div class="fighter-photo">${fight.fighter2.photo}</div>
+                        <div class="fighter-name">${fight.fighter2.name}</div>
+                        <div class="fighter-record">${fight.fighter2.record}</div>
+                    </div>
+                </div>
+                <div class="betting-section">
+                    <div class="bet-buttons">
+                        <button class="bet-btn bet-btn-fighter1" onclick="placeBet(${fight.id}, '${fight.fighter1.name}', 100)">
+                            Bet on ${fight.fighter1.name}<br>
+                            <small>100 Points</small>
+                        </button>
+                        <button class="bet-btn bet-btn-fighter2" onclick="placeBet(${fight.id}, '${fight.fighter2.name}', 100)">
+                            Bet on ${fight.fighter2.name}<br>
+                            <small>100 Points</small>
+                        </button>
+                    </div>
+                    ${fight.bets.length > 0 ? `
+                        <div class="current-bets">
+                            <strong>Current Bets:</strong>
+                            ${fight.bets.map(bet => `
+                                <div class="bet-item">
+                                    <span>${bet.fighter}</span>
+                                    <span>${bet.amount} pts</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+
+            return card;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            });
+        }
+
+        function placeBet(fightId, fighterName, amount) {
+            if (userPoints < amount) {
+                alert('Insufficient points!');
+                return;
+            }
+
+            // Emit bet via socket (will be implemented later)
+            alert(`Bet placed: ${amount} points on ${fighterName}`);
+            userPoints -= amount;
+            updateBalance();
+        }
+
+        function updateBalance() {
+            document.querySelector('.balance-amount').textContent = 
+                userPoints.toLocaleString() + ' Points';
+        }
+
+        // Load fights when page loads
+        document.addEventListener('DOMContentLoaded', loadFights);
+    </script>
+</body>
+</html>
