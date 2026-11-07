@@ -2,7 +2,13 @@ const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
+const mongoose = require('mongoose');
 
+// MongoDB Connection
+const mongoURI = process.env.MONGODB_URI;
+mongoose.connect(mongoURI)
+  .then(() => console.log('✅ MongoDB Connected Successfully!'))
+  .catch((err) => console.error('❌ MongoDB Connection Error:', err));
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
