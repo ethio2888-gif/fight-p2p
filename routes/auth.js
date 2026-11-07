@@ -9,16 +9,17 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key_change_this_
 // 1. ምዝገባ (Register)
 router.post('/register', async (req, res) => {
   try {
-    const { username, password } = req.body;
+    // ከፍሮንት-ኤንድ የሚመጡትን መረጃዎች መቀበል (email ተጨምሯል)
+    const { username, email, password } = req.body;
     
-    // ተጠቃሚው ቀድሞ መመዝገቡን ማረጋገጥ
-    const existingUser = await User.findOne({ username });
+    // ተጠቃሚው ቀድሞ መመዝገቡን ማረጋገጥ (ስም ወይም ኢሜይል)
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
     if (existingUser) {
-      return res.status(400).json({ message: 'ይህ የተጠቃሚ ስም ቀድሞ ተወስዷል' });
+      return res.status(400).json({ message: 'ይህ የተጠቃሚ ስም ወይም ኢሜይል ቀድሞ ተወስዷል' });
     }
 
     // አዲስ ተጠቃሚ መፍጠር (Password በ User model ውስጥ በራሱ Hash ይደረጋል)
-    const newUser = new User({ username, password });
+    const newUser = new User({ username, email, password });
     await newUser.save();
 
     res.status(201).json({ message: 'ተጠቃሚ በተሳካ ሁኔታ ተመዝግቧል', userId: newUser._id });
