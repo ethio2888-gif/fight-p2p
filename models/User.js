@@ -9,6 +9,14 @@ const userSchema = new mongoose.Schema({
     trim: true,
     minlength: 3
   },
+  email: {
+    type: String,
+    required: true,
+    unique: true,
+    trim: true,
+    lowercase: true,
+    match: [/^\S+@\S+\.\S+$/, 'ትክለኛ የኢሜይል አድራሻ ያስገቡ']
+  },
   password: {
     type: String,
     required: true,
@@ -24,7 +32,7 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// የይለፍ ቃልን ከመቀመጡ በፊት Hash ማድረግ (ለደህንነት)
+// የይለ ቃልን ከመመጡ በፊት Hash ማድረ (ለደህንነት)
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   try {
@@ -36,7 +44,7 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-// የተጠቃሚውን የይለፍ ቃል ከገባው ጋር ለማነፃፀር
+// የተቃሚውን የይለ ቃል ከገባው ጋር ለማነፃፀር
 userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
