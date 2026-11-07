@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fight P2P - መግቢያ እና ምዝገባ</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a2e;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #16213e;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 400px;
+        }
+        h2 {
+            text-align: center;
+            color: #e94560;
+            margin-bottom: 20px;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #0f3460;
+            border-radius: 6px;
+            background-color: #0f3460;
+            color: #ffffff;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+        input::placeholder {
+            color: #a0a0a0;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #e94560;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 15px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #c73650;
+        }
+        .toggle-link {
+            text-align: center;
+            margin-top: 15px;
+            color: #4ecca3;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 14px;
+            display: none;
+        }
+        .success {
+            background-color: rgba(78, 204, 163, 0.2);
+            color: #4ecca3;
+            border: 1px solid #4ecca3;
+        }
+        .error {
+            background-color: rgba(233, 69, 96, 0.2);
+            color: #e94560;
+            border: 1px solid #e94560;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- የምዝገባ ክፍል -->
+        <div id="registerSection">
+            <h2>አዲስ መለያ ይፍጠሩ</h2>
+            <input type="text" id="regUsername" placeholder="የተጠቃሚ ስም (Username)">
+            <input type="email" id="regEmail" placeholder="ኢሜይል (Email)">
+            <input type="password" id="regPassword" placeholder="የይለፍ ቃል (Password)">
+            <button onclick="register()">መዝገብ</button>
+            <p class="toggle-link" onclick="showLogin()">ድሮ መለያ አለዎት? ይግቡ</p>
+            <div id="regResult" class="result"></div>
+        </div>
+
+        <!-- የመግቢያ ክፍል -->
+        <div id="loginSection" class="hidden">
+            <h2>ወደ መለያዎ ይግቡ</h2>
+            <input type="text" id="loginUsername" placeholder="የተጠቃሚ ስም (Username)">
+            <input type="password" id="loginPassword" placeholder="የይለፍ ቃል (Password)">
+            <button onclick="login()">መግባት</button>
+            <p class="toggle-link" onclick="showRegister()">መለያ የለዎትም? ይመዝገቡ</p>
+            <div id="loginResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://fight-p2p.onrender.com/api/auth';
+
+        function showResult(elementId, message, isError) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.className = 'result ' + (isError ? 'error' : 'success');
+            el.style.display = 'block';
+        }
+
+        async function register() {
+            const username = document.getElementById('regUsername').value.trim();
+            const email = document.getElementById('regEmail').value.trim();
+            const password = document.getElementById('regPassword').value;
+            
+            if (!username || !email || !password) {
+                return showResult('regResult', 'እባክዎ ሁሉንም መስኮች ይሙሉ!', true);
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showResult('regResult', '✅ በተሳካ ሁኔታ ተመዝግበዋል! አሁን ይግቡ።', false);
+                    setTimeout(showLogin, 1500);
+                } else {
+                    showResult('regResult', '❌ ' + (data.message || 'ስህተት ተፈጥሯል'), true);
+                }
+            } catch (error) {
+                showResult('regResult', '❌ ከሰርቨር ጋር መገናኘት አልተሳካም።', true);
+            }
+        }
+
+        async function login() {
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                return showResult('loginResult', 'እባክዎ ስም እና ፓስዎርድ ያስገቡ!', true);
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Token ሲገኝ በ LocalStorage ውስጥ እንዲቀመጥ ማድረግ እንችላለን
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('username', data.username);
+                    showResult('loginResult', `✅ በተሳካ ሁኔታ ገብተዋል! ሂሳብዎ: ${data.balance} Points`, false);
+                    
+                    // ወደ ዋናው ገጽ ለማምራት (ከዚህ በኋላ እናገናኘዋለን)
+                    // setTimeout(() => { window.location.href = '/'; }, 2000);
+                } else {
+                    showResult('loginResult', '❌ ' + (data.message || 'ስህተት ተፈጥሯል'), true);
+                }
+            } catch (error) {
+                showResult('loginResult', '❌ ከሰርቨር ጋር መገናኘት አልተሳካም።', true);
+            }
+        }
+
+        function showLogin() {
+            document.getElementById('registerSection').classList.add('hidden');
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('regResult').style.display = 'none';
+        }
+
+        function showRegister() {
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('registerSection').classList.remove('hidden');
+            document.getElementById('loginResult').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
