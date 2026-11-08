@@ -6,11 +6,11 @@ const path = require('path');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
-// MongoDB Connection
+// 1. MongoDB Connection
 const mongoURI = process.env.MONGODB_URI;
 mongoose.connect(mongoURI)
   .then(() => console.log('✅ MongoDB Connected Successfully!'))
-  .catch((err) => console.error(' MongoDB Connection Error:', err));
+  .catch((err) => console.error('❌ MongoDB Connection Error:', err));
 
 const app = express();
 const server = http.createServer(app);
@@ -21,21 +21,31 @@ const io = socketIO(server, {
   }
 });
 
-const PORT = process.env.PORT || 3000;
+// Render default port is often 10000, fallback to 3000 for local
+const PORT = process.env.PORT || 10000;
 
-// Middleware
+// 2. Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Import routes
+// 3. Import Models (አዲስ የተጨመሩ)
+const Organization = require('./models/Organization');
+const Event = require('./models/Event');
+const Bet = require('./models/Bet');
+
+// 4. Import Routes
 const authRoutes = require('./routes/auth');
+const betRoutes = require('./routes/bet'); // አዲስ የተጨመረ
 
-// Use routes
+// 5. Use Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/bets', betRoutes); // አዲስ የተጨመረ
 
-// In-memory data storage
+// =================================================================
+// ለአሁኑ የቆየ (Legacy) ኮድ - ለ Socket.io ሙከራ እስኪፈልጉት ድረስ ይቆያል
+// =================================================================
 let fights = [
   {
     id: 1,
@@ -57,7 +67,6 @@ let fights = [
 
 let users = [];
 
-// API Routes
 app.get('/api/fights', (req, res) => {
   res.json(fights);
 });
@@ -87,7 +96,9 @@ io.on('connection', (socket) => {
     console.log('User disconnected:', socket.id);
   });
 });
+// =================================================================
 
+// 6. Start Server
 server.listen(PORT, () => {
-  console.log(`Fight P2P server running on port ${PORT}`);
+  console.log(`🚀 Fight P2P server running on port ${PORT}`);
 });
