@@ -65,7 +65,6 @@ router.post('/create', authenticateToken, async (req, res) => {
   try {
     const { eventId, fighterChoice, amount } = req.body;
 
-    // ✅ ማስተካከያ: eventId አሁን አማራጭ (optional) ነው
     if (!fighterChoice || !amount) {
       return res.status(400).json({ message: 'ሁሉም መረጃዎች ያስፈልጋሉ (fighterChoice እና amount)' });
     }
@@ -74,12 +73,10 @@ router.post('/create', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'ዝቅተኛው ውርርድ 10 ፖይንት ነው' });
     }
 
-    // fighterChoice ትክክለኛ መሆኑን ማረጋገጥ
     if (!['red', 'blue'].includes(fighterChoice)) {
       return res.status(400).json({ message: 'ትክክለኛ ያልሆነ የተዋጊ ምርጫ (red ወይም blue ብቻ)' });
     }
 
-    // ተጠቃሚውን መፈለግ እና ሂሳቡን ማረጋገጥ (Atomic Operation - Double Spending Prevention)
     const user = await User.findById(req.userId);
     if (!user) {
       return res.status(404).json({ message: 'ተጠቃሚ አልተገኘም' });
@@ -89,18 +86,16 @@ router.post('/create', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'በቂ ሂሳብ የለዎትም' });
     }
 
-    // ፖይንቱን ከሂሳቡ መቀነስ (Escrow - ወዲያውኑ ይቀንሳል)
     user.balance -= amount;
     await user.save();
 
-    // አዲስ ውርርድ መፍጠር
     const newBet = new Bet({
       creator: req.userId,
-      event: eventId || null, // ✅ ማስተካከያ: eventId ከሌለ null ይሆናል
+      event: eventId || null,
       fighterChoice,
       amount,
       status: 'open',
-      potentialWin: amount * 2 // 100% ትርፍ (P2P)
+      potentialWin: amount * 2
     });
 
     await newBet.save();
@@ -132,17 +127,14 @@ router.post('/accept/:betId', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'የራስዎን ውርርድ መቀበል አይችሉም' });
     }
 
-    // ተጠቃሚውን መፈለግ እና ሂሳቡን ማረጋገጥ
     const user = await User.findById(req.userId);
     if (user.balance < bet.amount) {
       return res.status(400).json({ message: 'በቂ ሂሳብ የለዎትም' });
     }
 
-    // ፖይንቱን ከሂሳቡ መቀነስ (Escrow)
     user.balance -= bet.amount;
     await user.save();
 
-    // ውርርዱን ማዘመን
     bet.acceptor = req.userId;
     bet.status = 'matched';
     bet.updatedAt = Date.now();
@@ -152,6 +144,43 @@ router.post('/accept/:betId', authenticateToken, async (req, res) => {
       message: 'ውርርዱ በተሳካ ሁኔታ ተቀብለዋል! ጨዋታው ይጀምራል',
       bet,
       newBalance: user.balance
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'የሰርቨር ስህተት', error: error.message });
+  }
+});
+
+// ✅ 5. አዲስ: ውርርድን ማስተካከል/ማሸነፍ (Settle Bet)
+router.post('/settle/:betId', authenticateToken, async (req, res) => {
+  try {
+    const { winningFighter } = req.body;
+    const { betId } = req.params;
+
+    // 1. የአሸናፊውን ምርጫ ማረጋገጥ
+    if (!winningFighter || !['red', 'blue'].includes(winningFighter)) {
+      return res.status(400).json({ message: 'ትክክለኛ ያልሆነ አሸናፊ ምርጫ (red ወይም blue ብቻ)' });
+    }
+
+    // 2. ውርርዱ መኖሩን እና 'matched' መሆኑን ማረጋገጥ
+    const bet = await Bet.findById(betId);
+    if (!bet) {
+      return res.status(404).json({ message: 'ውርርዱ አልተገኘም' });
+    }
+
+    if (bet.status !== 'matched') {
+      return res.status(400).json({ message: 'ይህ ውርርድ ሊጣመር (matched) አልቻለም ወይም ቀድሞ ተፈትቷል' });
+    }
+
+    // 3. በ models/Bet.js ውስጥ ያለውን settleBet ፈንክሽን መጥራት
+    const settledBet = await Bet.settleBet(betId, winningFighter);
+
+    // 4. የአሸናፊውን አዲስ ሂሳብ ለማሳየት መፈለግ
+    const winner = await User.findById(settledBet.winner);
+
+    res.json({
+      message: `ውርርዱ በተሳካ ሁኔታ ተፈትቷል! አሸናፊው ፖይንቱን አግኝቷል።`,
+      bet: settledBet,
+      winnerNewBalance: winner.balance
     });
   } catch (error) {
     res.status(500).json({ message: 'የሰርቨር ስህተት', error: error.message });
