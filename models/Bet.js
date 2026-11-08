@@ -73,7 +73,7 @@ const betSchema = new mongoose.Schema({
   }
 });
 
-// ውጤት ሲወጣ የሚሰራ ፈንክሽን (ለወደፊት)
+// ✅ ውጤት ሲወጣ የሚሰራ ፈንክሽን (Settle Bet Logic)
 betSchema.statics.settleBet = async function(betId, winningFighter) {
   const bet = await this.findById(betId).populate('creator acceptor');
   
@@ -81,8 +81,8 @@ betSchema.statics.settleBet = async function(betId, winningFighter) {
     throw new Error('ውርርዱ አልተጣመረም');
   }
 
-  // አሸናፊውን መወሰን
-  const isCreatorWinner = bet.creator.fighterChoice === winningFighter;
+  // ✅ ማስተካከያ: fighterChoice የ bet ንብረት ነው፣ የ creator አይደለም
+  const isCreatorWinner = bet.fighterChoice === winningFighter;
   const winner = isCreatorWinner ? bet.creator : bet.acceptor;
   const loser = isCreatorWinner ? bet.acceptor : bet.creator;
 
