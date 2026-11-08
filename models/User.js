@@ -15,7 +15,7 @@ const userSchema = new mongoose.Schema({
     unique: true,
     trim: true,
     lowercase: true,
-    match: [/^\S+@\S+\.\S+$/, 'ትክለኛ የኢሜይል አድራሻ ያስገቡ']
+    match: [/^\S+@\S+\.\S+$/, 'ትክክለኛ የኢሜይል አድራሻ ያስገቡ']
   },
   password: {
     type: String,
@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
   },
   balance: {
     type: Number,
-    default: 0
+    default: 1000 // ✅ ማስተካከያ: ከ 0 ወደ 1000 ተቀይሯል!
   },
   createdAt: {
     type: Date,
@@ -32,7 +32,7 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// የይለ ቃልን ከመመጡ በፊት Hash ማድረ (ለደህንነት)
+// የይለፍ ቃልን ከመመዝገቡ በፊት Hash ማድረግ (ለደህንነት)
 userSchema.pre('save', async function(next) {
   if (!this.isModified('password')) return next();
   try {
@@ -44,7 +44,7 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-// የተቃሚውን የይለ ቃል ከገባው ጋር ለማነፃፀር
+// የተጠቃሚውን የይለፍ ቃል ከገባው ጋር ለማነፃፀር
 userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
