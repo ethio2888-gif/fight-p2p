@@ -24,6 +24,62 @@
             margin: 0 auto;
         }
 
+        /* ========== የተጠቃሚ መረጃ ባር (User Bar) ========== */
+        .user-bar {
+            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+            padding: 15px 25px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 2px solid #e94560;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .user-info {
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .user-info span {
+            color: #4ecca3;
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.9em;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, #4ecca3 0%, #3fa890 100%);
+            color: #0f0f1a;
+        }
+
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(78, 204, 163, 0.4);
+        }
+
+        .btn-logout {
+            background: linear-gradient(135deg, #e94560 0%, #c73650 100%);
+            color: white;
+        }
+
+        .btn-logout:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(233, 69, 96, 0.4);
+        }
+        /* ================================================ */
+
         header {
             text-align: center;
             padding: 30px 0;
@@ -173,13 +229,20 @@
             color: black;
         }
 
-        .bet-btn:hover {
+        .bet-btn:hover:not(:disabled) {
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
         }
 
-        .bet-btn:active {
+        .bet-btn:active:not(:disabled) {
             transform: translateY(0);
+        }
+
+        .bet-btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            opacity: 0.6;
         }
 
         .current-bets {
@@ -206,6 +269,27 @@
         .status-live {
             color: #ff0000;
             animation: pulse 1s infinite;
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 6px;
+            display: none;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .message.success { 
+            background-color: rgba(78, 204, 163, 0.2); 
+            color: #4ecca3; 
+            border: 1px solid #4ecca3; 
+        }
+
+        .message.error { 
+            background-color: rgba(233, 69, 96, 0.2); 
+            color: #e94560; 
+            border: 1px solid #e94560; 
         }
 
         @keyframes pulse {
@@ -241,11 +325,28 @@
             .bet-btn {
                 width: 100%;
             }
+
+            .user-bar {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- ========== የተጠቃሚ መረጃ ባር ========== -->
+        <div class="user-bar" id="userBar">
+            <div class="user-info" id="userInfo">
+                <!-- JavaScript ይህንን ይሞላል -->
+            </div>
+            <div id="authButtons">
+                <!-- JavaScript ይህንን ይሞላል -->
+            </div>
+        </div>
+        <!-- ========================================== -->
+
         <header>
             <h1>🥊 Fight P2P</h1>
             <p class="tagline">Peer-to-Peer Boxing Betting Arena</p>
@@ -253,7 +354,7 @@
 
         <div class="user-balance">
             <div>Your Balance</div>
-            <div class="balance-amount">1,000 Points</div>
+            <div class="balance-amount" id="balanceAmount">1,000 Points</div>
         </div>
 
         <div class="fights-section">
@@ -271,7 +372,66 @@
     </div>
 
     <script>
-        let userPoints = 1000;
+        // ========== የተጠቃሚ መረጃ እና ሎጊን ስቴትስ ==========
+        let userPoints = parseInt(localStorage.getItem('balance')) || 1000;
+        const token = localStorage.getItem('token');
+        const username = localStorage.getItem('username');
+        // =====================================================
+
+        // Initialize user interface
+        function initializeUserInterface() {
+            const userInfoDiv = document.getElementById('userInfo');
+            const authButtonsDiv = document.getElementById('authButtons');
+
+            if (token && username) {
+                // ተጠቃሚው ገቷል
+                userInfoDiv.innerHTML = `Welcome, <span>${username}</span>!`;
+                authButtonsDiv.innerHTML = `<button class="btn btn-logout" onclick="logout()">Logout</button>`;
+                
+                // ሂሳቡን ማዘመን
+                updateBalance();
+            } else {
+                // ተጠቃው አልገባም
+                userInfoDiv.innerHTML = `Welcome, Guest!`;
+                authButtonsDiv.innerHTML = `<a href="/login.html" class="btn btn-login">Login / Register</a>`;
+                
+                // ርርድ ቁልችን ማሰናከል (Disable bet buttons)
+                disableAllBetButtons();
+            }
+        }
+
+        // Logout function
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            localStorage.removeItem('balance');
+            alert('Logged out successfully!');
+            window.location.reload();
+        }
+
+        // Disable all bet buttons
+        function disableAllBetButtons() {
+            const betButtons = document.querySelectorAll('.bet-btn');
+            betButtons.forEach(btn => {
+                btn.disabled = true;
+                const originalText = btn.innerHTML;
+                if (!originalText.includes('LOGIN TO BET')) {
+                    btn.dataset.originalText = originalText;
+                    btn.innerHTML = 'LOGIN TO BET<br><small>Please login first</small>';
+                }
+            });
+        }
+
+        // Enable bet buttons
+        function enableBetButtons() {
+            const betButtons = document.querySelectorAll('.bet-btn');
+            betButtons.forEach(btn => {
+                btn.disabled = false;
+                if (btn.dataset.originalText) {
+                    btn.innerHTML = btn.dataset.originalText;
+                }
+            });
+        }
 
         // Load fights from API
         async function loadFights() {
@@ -299,7 +459,7 @@
                 {
                     id: 2,
                     fighter1: { name: 'Addis Warrior', record: '10-1-0', photo: '🛡️' },
-                    fighter2: { name: 'Nile Storm', record: '8-4-2', photo: '🌊' },
+                    fighter2: { name: 'Nile Storm', record: '8-4-2', photo: '' },
                     date: '2026-11-20',
                     status: 'upcoming',
                     bets: []
@@ -315,6 +475,11 @@
                 const fightCard = createFightCard(fight);
                 container.appendChild(fightCard);
             });
+
+            // After displaying fights, check if user is logged in
+            if (!token || !username) {
+                disableAllBetButtons();
+            }
         }
 
         function createFightCard(fight) {
@@ -344,15 +509,16 @@
                 </div>
                 <div class="betting-section">
                     <div class="bet-buttons">
-                        <button class="bet-btn bet-btn-fighter1" onclick="placeBet(${fight.id}, '${fight.fighter1.name}', 100)">
+                        <button class="bet-btn bet-btn-fighter1" onclick="placeBet('${fight.fighter1.name}', 100, 'msg-fight${fight.id}')">
                             Bet on ${fight.fighter1.name}<br>
                             <small>100 Points</small>
                         </button>
-                        <button class="bet-btn bet-btn-fighter2" onclick="placeBet(${fight.id}, '${fight.fighter2.name}', 100)">
+                        <button class="bet-btn bet-btn-fighter2" onclick="placeBet('${fight.fighter2.name}', 100, 'msg-fight${fight.id}')">
                             Bet on ${fight.fighter2.name}<br>
                             <small>100 Points</small>
                         </button>
                     </div>
+                    <div id="msg-fight${fight.id}" class="message"></div>
                     ${fight.bets.length > 0 ? `
                         <div class="current-bets">
                             <strong>Current Bets:</strong>
@@ -379,25 +545,92 @@
             });
         }
 
-        function placeBet(fightId, fighterName, amount) {
-            if (userPoints < amount) {
-                alert('Insufficient points!');
+        // ========== P2P ውርር ማድረ (Place Bet via API) ==========
+        async function placeBet(fighterName, amount, messageId) {
+            const messageDiv = document.getElementById(messageId);
+            
+            // Check if user is logged in
+            if (!token || !username) {
+                alert('Please login first to place a bet!');
+                window.location.href = '/login.html';
                 return;
             }
 
-            // Emit bet via socket (will be implemented later)
-            alert(`Bet placed: ${amount} points on ${fighterName}`);
-            userPoints -= amount;
-            updateBalance();
+            // Check balance
+            if (userPoints < amount) {
+                showMessage(messageDiv, 'error', '❌ Insufficient points!');
+                return;
+            }
+
+            // Show processing message
+            showMessage(messageDiv, 'success', ' Processing your bet...');
+
+            try {
+                // ወደ P2P Backend API መላክ
+                const response = await fetch('https://fight-p2p.onrender.com/api/bets/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ 
+                        fighterChoice: fighterName.toLowerCase().includes('lion') || fighterName.toLowerCase().includes('ethiopian') ? 'red' : 'blue',
+                        amount: amount
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // ሂሳቡን ማዘመን
+                    userPoints = data.newBalance || (userPoints - amount);
+                    localStorage.setItem('balance', userPoints);
+                    updateBalance();
+                    
+                    showMessage(messageDiv, 'success', `✅ Successfully bet ${amount} points on ${fighterName}!`);
+                    
+                    // Refresh page after 2 seconds
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    showMessage(messageDiv, 'error', '❌ ' + (data.message || 'Bet failed'));
+                }
+            } catch (error) {
+                console.error('Bet error:', error);
+                showMessage(messageDiv, 'error', ' Network error. Please try again.');
+            }
+        }
+
+        function showMessage(element, type, text) {
+            const msgDiv = document.getElementById(element);
+            if (msgDiv) {
+                msgDiv.className = `message ${type}`;
+                msgDiv.innerText = text;
+                msgDiv.style.display = 'block';
+                
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    msgDiv.style.display = 'none';
+                }, 5000);
+            } else {
+                alert(text);
+            }
         }
 
         function updateBalance() {
-            document.querySelector('.balance-amount').textContent = 
-                userPoints.toLocaleString() + ' Points';
+            const balanceElement = document.getElementById('balanceAmount');
+            if (balanceElement) {
+                balanceElement.textContent = userPoints.toLocaleString() + ' Points';
+            }
         }
 
-        // Load fights when page loads
-        document.addEventListener('DOMContentLoaded', loadFights);
+        // ========== Page Load ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeUserInterface();
+            loadFights();
+        });
+        // ================================
     </script>
 </body>
 </html>
