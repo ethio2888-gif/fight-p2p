@@ -94,21 +94,21 @@
     <div class="container">
         <!-- የምዝገባ ክፍል -->
         <div id="registerSection">
-            <h2>አዲስ መለያ ይፍጠሩ</h2>
-            <input type="text" id="regUsername" placeholder="የተጠቃሚ ስም (Username)">
+            <h2>አዲስ መለያ ይጠሩ</h2>
+            <input type="text" id="regUsername" placeholder="የተጠቃ ስም (Username)">
             <input type="email" id="regEmail" placeholder="ኢሜይል (Email)">
-            <input type="password" id="regPassword" placeholder="የይለፍ ቃል (Password)">
+            <input type="password" id="regPassword" placeholder="የይለፍ ል (Password)">
             <button onclick="register()">መዝገብ</button>
             <p class="toggle-link" onclick="showLogin()">ድሮ መለያ አለዎት? ይግቡ</p>
             <div id="regResult" class="result"></div>
         </div>
 
-        <!-- የመግቢያ ክፍል -->
+        <!-- የመግያ ክፍል -->
         <div id="loginSection" class="hidden">
             <h2>ወደ መለያዎ ይግቡ</h2>
             <input type="text" id="loginUsername" placeholder="የተጠቃሚ ስም (Username)">
             <input type="password" id="loginPassword" placeholder="የይለፍ ቃል (Password)">
-            <button onclick="login()">መግባት</button>
+            <button onclick="login()">መባት</button>
             <p class="toggle-link" onclick="showRegister()">መለያ የለዎትም? ይመዝገቡ</p>
             <div id="loginResult" class="result"></div>
         </div>
@@ -130,7 +130,7 @@
             const password = document.getElementById('regPassword').value;
             
             if (!username || !email || !password) {
-                return showResult('regResult', 'እባክዎ ሁሉንም መስኮች ይሙሉ!', true);
+                return showResult('regResult', 'እባክዎ ሁሉንም መስኮች ይሉ!', true);
             }
 
             try {
@@ -142,13 +142,13 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    showResult('regResult', '✅ በተሳካ ሁኔታ ተመዝግበዋል! አሁን ይግቡ።', false);
+                    showResult('regResult', '✅ በተሳካ ሁኔታ ተመዝግበል! አሁን ይግቡ።', false);
                     setTimeout(showLogin, 1500);
                 } else {
-                    showResult('regResult', '❌ ' + (data.message || 'ስህተት ተፈጥሯል'), true);
+                    showResult('regResult', '❌ ' + (data.message || 'ስህተት ተፈሯል'), true);
                 }
             } catch (error) {
-                showResult('regResult', '❌ ከሰርቨር ጋር መገናኘት አልተሳካም።', true);
+                showResult('regResult', '❌ ከርቨር ጋር መገናኘት አልተሳካም።', true);
             }
         }
 
@@ -157,7 +157,7 @@
             const password = document.getElementById('loginPassword').value;
             
             if (!username || !password) {
-                return showResult('loginResult', 'እባክዎ ስም እና ፓስዎርድ ያስገቡ!', true);
+                return showResult('loginResult', 'እባክዎ ም እና ፓስዎርድ ያስገቡ!', true);
             }
 
             try {
@@ -169,18 +169,23 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    // Token ሲገኝ በ LocalStorage ውስጥ እንዲቀመጥ ማድረግ እንችላለን
+                    // Token እና መረጃ በ LocalStorage ውስጥ ማከማቸት
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('username', data.username);
-                    showResult('loginResult', `✅ በተሳካ ሁኔታ ገብተዋል! ሂሳብዎ: ${data.balance} Points`, false);
+                    localStorage.setItem('balance', data.balance || 1000);
                     
-                    // ወደ ዋናው ገጽ ለማምራት (ከዚህ በኋላ እናገናኘዋለን)
-                    // setTimeout(() => { window.location.href = '/'; }, 2000);
+                    showResult('loginResult', `✅ በተሳካ ሁኔታ ገብተዋል! እየተመላለስን...`, false);
+                    
+                    // ========== አዲስ የተጨመረ: ቀጥታ ወደ ዋናው ገ መሄድ ==========
+                    setTimeout(() => {
+                        window.location.href = '/'; // ወደ ዋናው ገጽ (index.html)
+                    }, 1500);
+                    // ===========================================================
                 } else {
                     showResult('loginResult', '❌ ' + (data.message || 'ስህተት ተፈጥሯል'), true);
                 }
             } catch (error) {
-                showResult('loginResult', '❌ ከሰርቨር ጋር መገናኘት አልተሳካም።', true);
+                showResult('loginResult', '❌ ከሰርቨር ጋር መገናኘት አልተሳም።', true);
             }
         }
 
