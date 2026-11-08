@@ -386,7 +386,12 @@
             if (token && username) {
                 // ተጠቃሚው ገብቷል
                 userInfoDiv.innerHTML = `Welcome, <span>${username}</span>!`;
-                authButtonsDiv.innerHTML = `<button class="btn btn-logout" onclick="logout()">Logout</button>`;
+                
+                // ✅ ማስተካከያ: የ "ክፍት ውርርዶች" ቁልፍ ተጨምሯል
+                authButtonsDiv.innerHTML = `
+                    <a href="/bets.html" class="btn" style="margin-right: 10px; background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: black;">🔥 ክፍት ውርርዶች</a>
+                    <button class="btn btn-logout" onclick="logout()">Logout</button>
+                `;
                 
                 // ሂሳቡን ማዘመን
                 updateBalance();
