@@ -19,7 +19,7 @@ const betSchema = new mongoose.Schema({
   event: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Event',
-    required: true
+    required: false // ✅ ማስተካከያ: ከ true ወደ false ተቀይሯል (eventId optional ስለሆነ)
   },
 
   // የትኛውን ተዋጊ መረጡ (ለምሳሌ: "red" ወይም "blue")
