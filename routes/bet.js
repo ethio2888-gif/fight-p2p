@@ -65,13 +65,18 @@ router.post('/create', authenticateToken, async (req, res) => {
   try {
     const { eventId, fighterChoice, amount } = req.body;
 
-    // Validation
-    if (!eventId || !fighterChoice || !amount) {
-      return res.status(400).json({ message: 'ሁሉም መረጃዎች ያስፈልጋሉ' });
+    // ✅ ማስተካከያ: eventId አሁን አማራጭ (optional) ነው
+    if (!fighterChoice || !amount) {
+      return res.status(400).json({ message: 'ሁሉም መረጃዎች ያስፈልጋሉ (fighterChoice እና amount)' });
     }
 
     if (amount < 10) {
       return res.status(400).json({ message: 'ዝቅተኛው ውርርድ 10 ፖይንት ነው' });
+    }
+
+    // fighterChoice ትክክለኛ መሆኑን ማረጋገጥ
+    if (!['red', 'blue'].includes(fighterChoice)) {
+      return res.status(400).json({ message: 'ትክክለኛ ያልሆነ የተዋጊ ምርጫ (red ወይም blue ብቻ)' });
     }
 
     // ተጠቃሚውን መፈለግ እና ሂሳቡን ማረጋገጥ (Atomic Operation - Double Spending Prevention)
@@ -91,7 +96,7 @@ router.post('/create', authenticateToken, async (req, res) => {
     // አዲስ ውርርድ መፍጠር
     const newBet = new Bet({
       creator: req.userId,
-      event: eventId,
+      event: eventId || null, // ✅ ማስተካከያ: eventId ከሌለ null ይሆናል
       fighterChoice,
       amount,
       status: 'open',
