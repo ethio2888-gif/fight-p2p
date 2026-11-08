@@ -384,18 +384,18 @@
             const authButtonsDiv = document.getElementById('authButtons');
 
             if (token && username) {
-                // ተጠቃሚው ገቷል
+                // ተጠቃሚው ገብቷል
                 userInfoDiv.innerHTML = `Welcome, <span>${username}</span>!`;
                 authButtonsDiv.innerHTML = `<button class="btn btn-logout" onclick="logout()">Logout</button>`;
                 
                 // ሂሳቡን ማዘመን
                 updateBalance();
             } else {
-                // ተጠቃው አልገባም
+                // ተጠቃሚው አልገባም
                 userInfoDiv.innerHTML = `Welcome, Guest!`;
                 authButtonsDiv.innerHTML = `<a href="/login.html" class="btn btn-login">Login / Register</a>`;
                 
-                // ርርድ ቁልችን ማሰናከል (Disable bet buttons)
+                // ውርርድ ቁልፎችን ማሰናከል (Disable bet buttons)
                 disableAllBetButtons();
             }
         }
@@ -459,7 +459,7 @@
                 {
                     id: 2,
                     fighter1: { name: 'Addis Warrior', record: '10-1-0', photo: '🛡️' },
-                    fighter2: { name: 'Nile Storm', record: '8-4-2', photo: '' },
+                    fighter2: { name: 'Nile Storm', record: '8-4-2', photo: '🌊' },
                     date: '2026-11-20',
                     status: 'upcoming',
                     bets: []
@@ -509,11 +509,13 @@
                 </div>
                 <div class="betting-section">
                     <div class="bet-buttons">
-                        <button class="bet-btn bet-btn-fighter1" onclick="placeBet('${fight.fighter1.name}', 100, 'msg-fight${fight.id}')">
+                        <!-- ✅ ማስተካከያ: 'red' ቀጥታ እንልካለን -->
+                        <button class="bet-btn bet-btn-fighter1" onclick="placeBet('${fight.fighter1.name}', 100, 'red', 'msg-fight${fight.id}')">
                             Bet on ${fight.fighter1.name}<br>
                             <small>100 Points</small>
                         </button>
-                        <button class="bet-btn bet-btn-fighter2" onclick="placeBet('${fight.fighter2.name}', 100, 'msg-fight${fight.id}')">
+                        <!-- ✅ ማስተካከያ: 'blue' ቀጥታ እንልካለን -->
+                        <button class="bet-btn bet-btn-fighter2" onclick="placeBet('${fight.fighter2.name}', 100, 'blue', 'msg-fight${fight.id}')">
                             Bet on ${fight.fighter2.name}<br>
                             <small>100 Points</small>
                         </button>
@@ -545,8 +547,9 @@
             });
         }
 
-        // ========== P2P ውርር ማድረ (Place Bet via API) ==========
-        async function placeBet(fighterName, amount, messageId) {
+        // ========== P2P ውርርድ ማድረግ (Place Bet via API) ==========
+        // ✅ ማስተካከያ: fighterChoice (red/blue) እንደ ፓራሜትር እንቀበላለን
+        async function placeBet(fighterName, amount, fighterChoice, messageId) {
             const messageDiv = document.getElementById(messageId);
             
             // Check if user is logged in
@@ -563,7 +566,7 @@
             }
 
             // Show processing message
-            showMessage(messageDiv, 'success', ' Processing your bet...');
+            showMessage(messageDiv, 'success', '⏳ Processing your bet...');
 
             try {
                 // ወደ P2P Backend API መላክ
@@ -574,7 +577,7 @@
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({ 
-                        fighterChoice: fighterName.toLowerCase().includes('lion') || fighterName.toLowerCase().includes('ethiopian') ? 'red' : 'blue',
+                        fighterChoice: fighterChoice, // ✅ ማስተካከያ: ቀጥታ 'red' ወይም 'blue' እንልካለን
                         amount: amount
                     })
                 });
@@ -598,7 +601,7 @@
                 }
             } catch (error) {
                 console.error('Bet error:', error);
-                showMessage(messageDiv, 'error', ' Network error. Please try again.');
+                showMessage(messageDiv, 'error', '❌ Network error. Please try again.');
             }
         }
 
