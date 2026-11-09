@@ -39,13 +39,15 @@ const Bet = require('./models/Bet');
 const authRoutes = require('./routes/auth');
 const betRoutes = require('./routes/bet'); 
 const adRoutes = require('./routes/ads'); 
-const leaderboardRoutes = require('./routes/leaderboard'); // ✅ አዲስ: የ Leaderboard ሩት
+const leaderboardRoutes = require('./routes/leaderboard'); 
+const dailyBonusRoutes = require('./routes/dailyBonus'); // ✅ አዲስ: የቀን ስጦታ ሩት
 
 // 5. Use Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/bets', betRoutes); 
 app.use('/api/ads', adRoutes); 
-app.use('/api/leaderboard', leaderboardRoutes); // ✅ አዲስ: የ Leaderboard ሩት መጠቀም
+app.use('/api/leaderboard', leaderboardRoutes); 
+app.use('/api/daily-bonus', dailyBonusRoutes); // ✅ አዲስ: የቀን ስጦታ ሩት መጠቀም
 
 // =================================================================
 // ለአሁኑ የቆየ (Legacy) ኮድ - ለ Socket.io ሙከራ እስኪፈልጉት ድረስ ይቆያል
