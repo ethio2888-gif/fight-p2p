@@ -407,8 +407,11 @@
 
             if (token && username) {
                 userInfoDiv.innerHTML = `Welcome, <span>${username}</span>!`;
+                
+                // ✅ ማስተካከያ: የ "Leaderboard" ቁልፍ ተጨምሯል
                 authButtonsDiv.innerHTML = `
-                    <a href="/bets.html" class="btn" style="margin-right: 10px; background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: black;">🔥 ክፍት ውርርዶች</a>
+                    <a href="/leaderboard.html" class="btn" style="margin-right: 10px; background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: black;">🏆 Leaderboard</a>
+                    <a href="/bets.html" class="btn" style="margin-right: 10px; background: linear-gradient(135deg, #4ecca3 0%, #3fa890 100%); color: black;">🔥 ክፍት ውርርዶች</a>
                     <button class="btn btn-logout" onclick="logout()">Logout</button>
                 `;
                 updateBalance();
