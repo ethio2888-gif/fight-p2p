@@ -24,7 +24,6 @@
             margin: 0 auto;
         }
 
-        /* ========== የተጠቃሚ መረጃ ባር (User Bar) ========== */
         .user-bar {
             background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
             padding: 15px 25px;
@@ -79,7 +78,6 @@
             box-shadow: 0 4px 8px rgba(233, 69, 96, 0.4);
         }
 
-        /* ========== የማስታወቂያ ባነር (Ad Banner) ========== */
         .ads-container {
             margin-bottom: 30px;
             display: flex;
@@ -247,7 +245,6 @@
             margin-top: 15px;
         }
 
-        /* ✅ አዲስ: የውርርድ መጠን መምረጫ ዲዛይን */
         .bet-amount-selector { 
             margin-bottom: 15px; 
             text-align: center; 
@@ -408,7 +405,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- ========== የተጠቃሚ መረጃ ባር ========== -->
         <div class="user-bar" id="userBar">
             <div class="user-info" id="userInfo"></div>
             <div id="authButtons"></div>
@@ -424,7 +420,6 @@
             <div class="balance-amount" id="balanceAmount">1,000 Points</div>
         </div>
 
-        <!-- ✅ አዲስ: የማስታወቂያ ቦታ -->
         <div id="ads-container" class="ads-container"></div>
 
         <div class="fights-section">
@@ -449,11 +444,9 @@
 
             if (token && username) {
                 userInfoDiv.innerHTML = `Welcome, <span>${username}</span>!`;
-                
-                // ✅ ማስተካከያ: የ "Leaderboard" ቁልፍ ተጨምሯል
                 authButtonsDiv.innerHTML = `
                     <a href="/leaderboard.html" class="btn" style="margin-right: 10px; background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: black;">🏆 Leaderboard</a>
-                    <a href="/bets.html" class="btn" style="margin-right: 10px; background: linear-gradient(135deg, #4ecca3 0%, #3fa890 100%); color: black;">🔥 ክፍት ውርርዶች</a>
+                    <a href="/bets.html" class="btn" style="margin-right: 10px; background: linear-gradient(135deg, #4ecca3 0%, #3fa890 100%); color: black;"> ክፍት ውርርዶች</a>
                     <button class="btn btn-logout" onclick="logout()">Logout</button>
                 `;
                 updateBalance();
@@ -508,7 +501,7 @@
                 {
                     id: 2,
                     fighter1: { name: 'Addis Warrior', record: '10-1-0', photo: '🛡️' },
-                    fighter2: { name: 'Nile Storm', record: '8-4-2', photo: '🌊' },
+                    fighter2: { name: 'Nile Storm', record: '8-4-2', photo: '' },
                     date: '2026-11-20',
                     status: 'upcoming',
                     bets: []
@@ -520,9 +513,38 @@
             const container = document.getElementById('fights-container');
             container.innerHTML = '';
             fights.forEach(fight => {
-                container.appendChild(createFightCard(fight));
+                const card = createFightCard(fight);
+                container.appendChild(card);
+                // ✅ አዲስ: Event Listeners ከካርዱ ከተፈጠረ በኋላ መጨመር
+                setupBetButtons(card, fight);
             });
             if (!token || !username) disableAllBetButtons();
+        }
+
+        // ✅ አዲስ: የ event listeners ማስተካያ
+        function setupBetButtons(card, fight) {
+            const quickButtons = card.querySelectorAll('.quick-bet-btn');
+            const input = card.querySelector('.custom-bet-input');
+            const betBtn1 = card.querySelector('.bet-btn-fighter1');
+            const betBtn2 = card.querySelector('.bet-btn-fighter2');
+            const msgDiv = card.querySelector('.message');
+
+            // Quick buttons event listeners
+            quickButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const amount = parseInt(btn.dataset.amount);
+                    input.value = amount;
+                });
+            });
+
+            // Bet buttons event listeners
+            betBtn1.addEventListener('click', () => {
+                placeBet(fight.fighter1.name, 'red', fight.id, msgDiv);
+            });
+
+            betBtn2.addEventListener('click', () => {
+                placeBet(fight.fighter2.name, 'blue', fight.id, msgDiv);
+            });
         }
 
         function createFightCard(fight) {
@@ -550,28 +572,27 @@
                     </div>
                 </div>
                 <div class="betting-section">
-                    <!-- ✅ አዲስ: የውርርድ መጠን መምረጫ -->
                     <div class="bet-amount-selector">
                         <label style="color: #ffd700; font-weight: bold; display: block; margin-bottom: 10px;">Select Bet Amount (Min: 50, Max: 10,000)</label>
                         <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px;">
-                            <button class="quick-bet-btn" onclick="setBetAmount(50, 'fight${fight.id}')">50</button>
-                            <button class="quick-bet-btn" onclick="setBetAmount(100, 'fight${fight.id}')">100</button>
-                            <button class="quick-bet-btn" onclick="setBetAmount(200, 'fight${fight.id}')">200</button>
-                            <button class="quick-bet-btn" onclick="setBetAmount(500, 'fight${fight.id}')">500</button>
-                            <button class="quick-bet-btn" onclick="setBetAmount(1000, 'fight${fight.id}')">1000</button>
+                            <button class="quick-bet-btn" data-amount="50">50</button>
+                            <button class="quick-bet-btn" data-amount="100">100</button>
+                            <button class="quick-bet-btn" data-amount="200">200</button>
+                            <button class="quick-bet-btn" data-amount="500">500</button>
+                            <button class="quick-bet-btn" data-amount="1000">1000</button>
                         </div>
-                        <input type="number" id="bet-amount-fight${fight.id}" class="custom-bet-input" placeholder="Or enter custom amount" min="50" max="10000" value="100">
+                        <input type="number" class="custom-bet-input" placeholder="Or enter custom amount" min="50" max="10000" value="100">
                     </div>
                     
                     <div class="bet-buttons">
-                        <button class="bet-btn bet-btn-fighter1" onclick="placeBet('${fight.fighter1.name}', 'red', 'fight${fight.id}', 'msg-fight${fight.id}')">
+                        <button class="bet-btn bet-btn-fighter1">
                             Bet on ${fight.fighter1.name}
                         </button>
-                        <button class="bet-btn bet-btn-fighter2" onclick="placeBet('${fight.fighter2.name}', 'blue', 'fight${fight.id}', 'msg-fight${fight.id}')">
+                        <button class="bet-btn bet-btn-fighter2">
                             Bet on ${fight.fighter2.name}
                         </button>
                     </div>
-                    <div id="msg-fight${fight.id}" class="message"></div>
+                    <div class="message"></div>
                     ${fight.bets.length > 0 ? `
                         <div class="current-bets">
                             <strong>Current Bets:</strong>
@@ -587,22 +608,17 @@
             return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         }
 
-        // ✅ አዲስ: የውርርድ መጠንን በፍጥነት ለመምረጥ
-        function setBetAmount(amount, fightId) {
-            const input = document.getElementById(`bet-amount-fight${fightId}`);
-            if (input) input.value = amount;
-        }
-
-        // ✅ የተሻሻለ: መጠኑን ከ Input ሳጥን የሚያነብ እና የደህንነት ማረጋገጫ ያለው
-        async function placeBet(fighterName, fighterChoice, fightId, messageId) {
-            const messageDiv = document.getElementById(messageId);
+        // ✅ የተሻሻለ: input ከ card ማግት
+        async function placeBet(fighterName, fighterChoice, fightId, messageDiv) {
             if (!token || !username) {
                 alert('Please login first to place a bet!');
                 window.location.href = '/login.html';
                 return;
             }
             
-            const amountInput = document.getElementById(`bet-amount-fight${fightId}`);
+            // ✅ አዲስ: input ከ messageDiv parent ማግት
+            const card = messageDiv.closest('.fight-card');
+            const amountInput = card.querySelector('.custom-bet-input');
             const betAmount = parseInt(amountInput.value);
 
             // 🔒 SECURITY FIRST: Frontend Validation
@@ -661,7 +677,6 @@
             }
         }
 
-        // ✅ አዲስ: ማስታወቂያዎችን ከ Backend ማምጣት እና ማሳየት
         async function loadAds() {
             try {
                 const response = await fetch('https://fight-p2p.onrender.com/api/ads');
@@ -684,8 +699,8 @@
                 const adLink = document.createElement('a');
                 adLink.className = 'ad-banner';
                 adLink.href = ad.targetUrl;
-                adLink.target = '_blank'; // በአዲስ ታብ እንዲከፈት
-                adLink.rel = 'noopener noreferrer'; // ✅ Security: Tabnabbing መከላከል
+                adLink.target = '_blank';
+                adLink.rel = 'noopener noreferrer';
                 
                 adLink.innerHTML = `
                     <span class="ad-label">Ad</span>
@@ -695,11 +710,10 @@
             });
         }
 
-        // ========== Page Load ==========
         document.addEventListener('DOMContentLoaded', () => {
             initializeUserInterface();
             loadFights();
-            loadAds(); // ✅ ማስታወቂያዎችን መጫን
+            loadAds();
         });
     </script>
 </body>
