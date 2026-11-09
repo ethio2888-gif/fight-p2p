@@ -69,8 +69,17 @@ router.post('/create', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'ሁሉም መረጃዎች ያስፈልጋሉ (fighterChoice እና amount)' });
     }
 
-    if (amount < 10) {
-      return res.status(400).json({ message: 'ዝቅተኛው ውርርድ 10 ፖይንት ነው' });
+    // 🔒 SECURITY FIRST: መጠኑን ወደ ቁጥር መቀየር እና ገደቦችን ማረጋገጥ
+    const betAmount = Number(amount);
+    const MIN_BET = 50;
+    const MAX_BET = 10000;
+
+    if (isNaN(betAmount) || betAmount < MIN_BET) {
+      return res.status(400).json({ message: `ዝቅተኛው ውርርድ ${MIN_BET} ፖይንት ነው` });
+    }
+
+    if (betAmount > MAX_BET) {
+      return res.status(400).json({ message: `ከፍተኛው ውርርድ ${MAX_BET} ፖይንት ነው` });
     }
 
     if (!['red', 'blue'].includes(fighterChoice)) {
@@ -82,20 +91,21 @@ router.post('/create', authenticateToken, async (req, res) => {
       return res.status(404).json({ message: 'ተጠቃሚ አልተገኘም' });
     }
 
-    if (user.balance < amount) {
+    // 🔒 SECURITY FIRST: በቂ ሂሳብ መኖሩን ማረጋገጥ
+    if (user.balance < betAmount) {
       return res.status(400).json({ message: 'በቂ ሂሳብ የለዎትም' });
     }
 
-    user.balance -= amount;
+    user.balance -= betAmount;
     await user.save();
 
     const newBet = new Bet({
       creator: req.userId,
       event: eventId || null,
       fighterChoice,
-      amount,
+      amount: betAmount, // ✅ የተረጋገጠውን ቁጥር መጠቀም
       status: 'open',
-      potentialWin: amount * 2
+      potentialWin: betAmount * 2
     });
 
     await newBet.save();
@@ -150,18 +160,16 @@ router.post('/accept/:betId', authenticateToken, async (req, res) => {
   }
 });
 
-// ✅ 5. አዲስ: ውርርድን ማስተካከል/ማሸነፍ (Settle Bet)
+// 5. ውርርድን ማስተካከል/ማሸነፍ (Settle Bet)
 router.post('/settle/:betId', authenticateToken, async (req, res) => {
   try {
     const { winningFighter } = req.body;
     const { betId } = req.params;
 
-    // 1. የአሸናፊውን ምርጫ ማረጋገጥ
     if (!winningFighter || !['red', 'blue'].includes(winningFighter)) {
       return res.status(400).json({ message: 'ትክክለኛ ያልሆነ አሸናፊ ምርጫ (red ወይም blue ብቻ)' });
     }
 
-    // 2. ውርርዱ መኖሩን እና 'matched' መሆኑን ማረጋገጥ
     const bet = await Bet.findById(betId);
     if (!bet) {
       return res.status(404).json({ message: 'ውርርዱ አልተገኘም' });
@@ -171,10 +179,7 @@ router.post('/settle/:betId', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'ይህ ውርርድ ሊጣመር (matched) አልቻለም ወይም ቀድሞ ተፈትቷል' });
     }
 
-    // 3. በ models/Bet.js ውስጥ ያለውን settleBet ፈንክሽን መጥራት
     const settledBet = await Bet.settleBet(betId, winningFighter);
-
-    // 4. የአሸናፊውን አዲስ ሂሳብ ለማሳየት መፈለግ
     const winner = await User.findById(settledBet.winner);
 
     res.json({
