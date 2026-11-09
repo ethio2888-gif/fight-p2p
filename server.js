@@ -30,18 +30,20 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 3. Import Models (አዲስ የተጨመሩ)
+// 3. Import Models
 const Organization = require('./models/Organization');
 const Event = require('./models/Event');
 const Bet = require('./models/Bet');
 
 // 4. Import Routes
 const authRoutes = require('./routes/auth');
-const betRoutes = require('./routes/bet'); // አዲስ የተጨመረ
+const betRoutes = require('./routes/bet'); 
+const adRoutes = require('./routes/ads'); // ✅ አዲስ: የማስታወቂያ ሩት
 
 // 5. Use Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/bets', betRoutes); // አዲስ የተጨመረ
+app.use('/api/bets', betRoutes); 
+app.use('/api/ads', adRoutes); // ✅ አዲስ: የማስታወቂያ ሩት መጠቀም
 
 // =================================================================
 // ለአሁኑ የቆየ (Legacy) ኮድ - ለ Socket.io ሙከራ እስኪፈልጉት ድረስ ይቆያል
