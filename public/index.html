@@ -444,9 +444,12 @@
 
             if (token && username) {
                 userInfoDiv.innerHTML = `Welcome, <span>${username}</span>!`;
+                
+                // ✅ አዲስ: የ "History" ቁልፍ ተጨምሯል
                 authButtonsDiv.innerHTML = `
+                    <a href="/history.html" class="btn" style="margin-right: 10px; background: linear-gradient(135deg, #00bfff 0%, #007acc 100%); color: white;">📜 History</a>
                     <a href="/leaderboard.html" class="btn" style="margin-right: 10px; background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: black;">🏆 Leaderboard</a>
-                    <a href="/bets.html" class="btn" style="margin-right: 10px; background: linear-gradient(135deg, #4ecca3 0%, #3fa890 100%); color: black;"> ክፍት ውርርዶች</a>
+                    <a href="/bets.html" class="btn" style="margin-right: 10px; background: linear-gradient(135deg, #4ecca3 0%, #3fa890 100%); color: black;">ክፍት ውርርዶች</a>
                     <button class="btn btn-logout" onclick="logout()">Logout</button>
                 `;
                 updateBalance();
@@ -501,7 +504,7 @@
                 {
                     id: 2,
                     fighter1: { name: 'Addis Warrior', record: '10-1-0', photo: '🛡️' },
-                    fighter2: { name: 'Nile Storm', record: '8-4-2', photo: '' },
+                    fighter2: { name: 'Nile Storm', record: '8-4-2', photo: '🌊' },
                     date: '2026-11-20',
                     status: 'upcoming',
                     bets: []
@@ -515,13 +518,11 @@
             fights.forEach(fight => {
                 const card = createFightCard(fight);
                 container.appendChild(card);
-                // ✅ አዲስ: Event Listeners ከካርዱ ከተፈጠረ በኋላ መጨመር
                 setupBetButtons(card, fight);
             });
             if (!token || !username) disableAllBetButtons();
         }
 
-        // ✅ አዲስ: የ event listeners ማስተካያ
         function setupBetButtons(card, fight) {
             const quickButtons = card.querySelectorAll('.quick-bet-btn');
             const input = card.querySelector('.custom-bet-input');
@@ -529,7 +530,6 @@
             const betBtn2 = card.querySelector('.bet-btn-fighter2');
             const msgDiv = card.querySelector('.message');
 
-            // Quick buttons event listeners
             quickButtons.forEach(btn => {
                 btn.addEventListener('click', () => {
                     const amount = parseInt(btn.dataset.amount);
@@ -537,7 +537,6 @@
                 });
             });
 
-            // Bet buttons event listeners
             betBtn1.addEventListener('click', () => {
                 placeBet(fight.fighter1.name, 'red', fight.id, msgDiv);
             });
@@ -608,7 +607,6 @@
             return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
         }
 
-        // ✅ የተሻሻለ: input ከ card ማግት
         async function placeBet(fighterName, fighterChoice, fightId, messageDiv) {
             if (!token || !username) {
                 alert('Please login first to place a bet!');
@@ -616,12 +614,10 @@
                 return;
             }
             
-            // ✅ አዲስ: input ከ messageDiv parent ማግት
             const card = messageDiv.closest('.fight-card');
             const amountInput = card.querySelector('.custom-bet-input');
             const betAmount = parseInt(amountInput.value);
 
-            // 🔒 SECURITY FIRST: Frontend Validation
             if (isNaN(betAmount) || betAmount < 50) {
                 showMessage(messageDiv, 'error', '❌ Minimum bet is 50 points!');
                 return;
