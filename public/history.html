@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fight P2P - Bet History</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Arial', sans-serif; background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%); color: #ffffff; min-height: 100vh; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        
+        .user-bar { background: linear-gradient(135deg, #16213e 0%, #0f3460 100%); padding: 15px 25px; border-radius: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; border: 2px solid #e94560; }
+        .user-info { font-size: 1.1em; font-weight: bold; }
+        .user-info span { color: #4ecca3; font-weight: bold; }
+        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9em; text-decoration: none; display: inline-block; transition: all 0.3s; }
+        .btn-home { background: linear-gradient(135deg, #4ecca3 0%, #3fa890 100%); color: #0f0f1a; }
+        .btn-logout { background: linear-gradient(135deg, #e94560 0%, #c73650 100%); color: white; }
+
+        header { text-align: center; padding: 30px 0; border-bottom: 3px solid #ffd700; margin-bottom: 30px; }
+        h1 { font-size: 2.2em; color: #ffd700; text-transform: uppercase; letter-spacing: 2px; }
+
+        .history-list { display: flex; flex-direction: column; gap: 15px; }
+        
+        .history-card {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
+            border: 1px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .bet-date { color: #888; font-size: 0.85em; }
+        
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; }
+        .status-open { background: rgba(255, 165, 0, 0.2); color: #ffa500; border: 1px solid #ffa500; }
+        .status-matched { background: rgba(0, 191, 255, 0.2); color: #00bfff; border: 1px solid #00bfff; }
+        .status-won { background: rgba(78, 204, 163, 0.2); color: #4ecca3; border: 1px solid #4ecca3; }
+        .status-lost { background: rgba(233, 69, 96, 0.2); color: #e94560; border: 1px solid #e94560; }
+
+        .card-body { display: flex; justify-content: space-between; align-items: center; }
+        .bet-details { display: flex; flex-direction: column; gap: 5px; }
+        .bet-choice { font-size: 1.1em; font-weight: bold; color: #fff; }
+        .bet-choice span { color: #ffd700; }
+        .bet-amount { color: #888; font-size: 0.9em; }
+        
+        .potential-win { text-align: right; }
+        .win-label { color: #888; font-size: 0.8em; }
+        .win-amount { font-size: 1.2em; font-weight: bold; color: #4ecca3; }
+
+        .empty-state { text-align: center; padding: 40px; color: #888; font-size: 1.2em; background: #1a1a1a; border-radius: 10px; border: 1px dashed #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="user-bar">
+            <div class="user-info" id="userInfo">Loading...</div>
+            <div id="authButtons"></div>
+        </div>
+
+        <header>
+            <h1>📜 Bet History</h1>
+            <p style="color: #888;">የውርርድ ታሪክህ እዚህ ይታያል</p>
+        </header>
+
+        <div id="history-container" class="history-list">
+            <div class="empty-state">⏳ ውጤቶችን እያመጣን ነው...</div>
+        </div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const username = localStorage.getItem('username');
+        const userPoints = parseInt(localStorage.getItem('balance')) || 0;
+
+        // 🔒 Security First: ተጠቃሚው ካልገባ ወደ login ይላክ
+        if (!token || !username) {
+            window.location.href = '/login.html';
+        } else {
+            document.getElementById('userInfo').innerHTML = `Welcome, <span>${username}</span>! | Balance: <span>${userPoints}</span> Pts`;
+            document.getElementById('authButtons').innerHTML = `
+                <a href="/" class="btn btn-home" style="margin-right: 10px;">ዋና ገጽ</a>
+                <button class="btn btn-logout" onclick="logout()">Logout</button>
+            `;
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/login.html';
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch('https://fight-p2p.onrender.com/api/bets/my-bets', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                const bets = await response.json();
+                displayHistory(bets);
+            } catch (error) {
+                console.error('Error loading history:', error);
+                document.getElementById('history-container').innerHTML = '<div class="empty-state">❌ የኔትወርክ ችግር ተፈጥሯል።</div>';
+            }
+        }
+
+        function displayHistory(bets) {
+            const container = document.getElementById('history-container');
+            
+            if (!bets || bets.length === 0) {
+                container.innerHTML = '<div class="empty-state">📭 እስካሁን ምንም ውርርድ አላደረግህም።</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+            bets.forEach(bet => {
+                const card = document.createElement('div');
+                card.className = 'history-card';
+
+                // Status mapping
+                let statusClass = 'status-open';
+                let statusText = 'Open (ክፍት)';
+                let winDisplay = `<div class="win-label">Potential Win</div><div class="win-amount">${bet.potentialWin} pts</div>`;
+
+                if (bet.status === 'matched') {
+                    statusClass = 'status-matched';
+                    statusText = 'Matched (ተጣምሯል)';
+                } else if (bet.status === 'won') {
+                    statusClass = 'status-won';
+                    statusText = 'Won (አሸንፈሃል!)';
+                    winDisplay = `<div class="win-label">Won Amount</div><div class="win-amount">${bet.potentialWin} pts</div>`;
+                } else if (bet.status === 'lost') {
+                    statusClass = 'status-lost';
+                    statusText = 'Lost (ተሳነሃል)';
+                    winDisplay = `<div class="win-label">Lost</div><div class="win-amount" style="color: #e94560;">-${bet.amount} pts</div>`;
+                }
+
+                const date = new Date(bet.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const choiceColor = bet.fighterChoice === 'red' ? '#ff0000' : '#ffd700';
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <span class="bet-date">📅 ${date}</span>
+                        <span class="status-badge ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="bet-details">
+                            <div class="bet-choice">Choice: <span style="color: ${choiceColor}">${bet.fighterChoice.toUpperCase()}</span></div>
+                            <div class="bet-amount">Wager: ${bet.amount} Points</div>
+                        </div>
+                        <div class="potential-win">
+                            ${winDisplay}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        loadHistory();
+    </script>
+</body>
+</html>
