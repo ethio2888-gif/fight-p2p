@@ -103,7 +103,7 @@ router.post('/create', authenticateToken, async (req, res) => {
       creator: req.userId,
       event: eventId || null,
       fighterChoice,
-      amount: betAmount, // ✅ የተረጋገጠውን ቁጥር መጠቀም
+      amount: betAmount,
       status: 'open',
       potentialWin: betAmount * 2
     });
@@ -186,6 +186,49 @@ router.post('/settle/:betId', authenticateToken, async (req, res) => {
       message: `ውርርዱ በተሳካ ሁኔታ ተፈትቷል! አሸናፊው ፖይንቱን አግኝቷል።`,
       bet: settledBet,
       winnerNewBalance: winner.balance
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'የሰርቨር ስህተት', error: error.message });
+  }
+});
+
+// ✅ 6. አዲስ: ውርርድ መሰረዝ (Cancel Open Bet) - ተጫዋች A
+router.post('/cancel/:betId', authenticateToken, async (req, res) => {
+  try {
+    const bet = await Bet.findById(req.params.betId);
+    
+    if (!bet) {
+      return res.status(404).json({ message: 'ውርርዱ አልተገኘም' });
+    }
+
+    // 🔒 SECURITY FIRST: ባለቤትነት ማረጋገጫ (Ownership Verification)
+    if (bet.creator.toString() !== req.userId) {
+      return res.status(403).json({ message: 'ይህንን ውርርድ የመሰረዝ መብት የለዎትም' });
+    }
+
+    // 🔒 SECURITY FIRST: ሁኔታ ማረጋገጫ (Status Verification)
+    if (bet.status !== 'open') {
+      return res.status(400).json({ message: 'ይህ ውርርድ ተጣምሯል ወይም ቀድሞ ተሰርዟል' });
+    }
+
+    // 🔒 SECURITY FIRST: ገንዘብ መመለስ (Safe Refund)
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'ተጠቃሚ አልተገኘም' });
+    }
+
+    user.balance += bet.amount; // ገንዘቡን በትክክለኛው መጠን መመለስ
+    await user.save();
+
+    // ውርርዱን አለመሰረዝ (Delete)፣ ሁኔታውን ወደ 'cancelled' መቀየር (ለታሪክ እንዲቀመጥ)
+    bet.status = 'cancelled';
+    bet.updatedAt = Date.now();
+    await bet.save();
+
+    res.json({
+      message: 'ውርርዱ በተሳካ ሁኔታ ተሰርዟል። ገንዘቡ ወደ ሂሳብዎ ተመልሷል።',
+      newBalance: user.balance,
+      refundedAmount: bet.amount
     });
   } catch (error) {
     res.status(500).json({ message: 'የሰርቨር ስህተት', error: error.message });
