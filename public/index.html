@@ -153,13 +153,38 @@
             padding: 15px 25px;
             border-radius: 10px;
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
             font-weight: bold;
         }
 
         .balance-amount {
             font-size: 2em;
             color: #ff0000;
+        }
+
+        /* ✅ አዲስ: የቀን ስጦታ ዲዛይን */
+        .daily-bonus-container {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px dashed #ffd700;
+            border-radius: 10px;
+        }
+
+        .bonus-btn {
+            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+            color: black;
+            font-size: 1.1em;
+            padding: 12px 30px;
+            border: 2px solid #ffd700;
+        }
+        .bonus-btn:disabled {
+            background: #333;
+            color: #888;
+            border-color: #555;
+            cursor: not-allowed;
+            opacity: 0.7;
         }
 
         .fights-section {
@@ -420,6 +445,14 @@
             <div class="balance-amount" id="balanceAmount">1,000 Points</div>
         </div>
 
+        <!-- ✅ አዲስ: የቀን ስጦታ ክፍል -->
+        <div id="daily-bonus-container" class="daily-bonus-container" style="display: none;">
+            <button id="claimBonusBtn" class="btn bonus-btn">
+                🎁 Claim Daily Bonus (+50 Points)
+            </button>
+            <p id="bonusMessage" style="margin-top: 10px; color: #888; font-size: 0.9em;"></p>
+        </div>
+
         <div id="ads-container" class="ads-container"></div>
 
         <div class="fights-section">
@@ -444,8 +477,6 @@
 
             if (token && username) {
                 userInfoDiv.innerHTML = `Welcome, <span>${username}</span>!`;
-                
-                // ✅ አዲስ: የ "History" ቁልፍ ተጨምሯል
                 authButtonsDiv.innerHTML = `
                     <a href="/history.html" class="btn" style="margin-right: 10px; background: linear-gradient(135deg, #00bfff 0%, #007acc 100%); color: white;">📜 History</a>
                     <a href="/leaderboard.html" class="btn" style="margin-right: 10px; background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: black;">🏆 Leaderboard</a>
@@ -453,6 +484,7 @@
                     <button class="btn btn-logout" onclick="logout()">Logout</button>
                 `;
                 updateBalance();
+                checkDailyBonusStatus(); // ✅ አዲስ: የቀን ስጦታ ሁኔታን ማረጋገጥ
             } else {
                 userInfoDiv.innerHTML = `Welcome, Guest!`;
                 authButtonsDiv.innerHTML = `<a href="/login.html" class="btn btn-login">Login / Register</a>`;
@@ -478,6 +510,36 @@
                     btn.innerHTML = 'LOGIN TO BET<br><small>Please login first</small>';
                 }
             });
+        }
+
+        // ✅ አዲስ: የቀን ስጦታ ሁኔታን ከ Backend ማረጋገጥ
+        async function checkDailyBonusStatus() {
+            if (!token) return;
+            try {
+                const response = await fetch('https://fight-p2p.onrender.com/api/daily-bonus/status', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    const container = document.getElementById('daily-bonus-container');
+                    const btn = document.getElementById('claimBonusBtn');
+                    const msg = document.getElementById('bonusMessage');
+                    
+                    container.style.display = 'block';
+                    
+                    if (data.isReady) {
+                        btn.disabled = false;
+                        btn.innerText = '🎁 Claim Daily Bonus (+50 Points)';
+                        msg.innerText = '';
+                    } else {
+                        btn.disabled = true;
+                        btn.innerText = '🎁 Bonus Claimed';
+                        msg.innerText = `Next bonus available in ${data.hoursLeft} hours.`;
+                    }
+                }
+            } catch (error) {
+                console.error('Error checking bonus status:', error);
+            }
         }
 
         async function loadFights() {
@@ -706,10 +768,56 @@
             });
         }
 
+        // ========== Page Load ==========
         document.addEventListener('DOMContentLoaded', () => {
             initializeUserInterface();
             loadFights();
             loadAds();
+            
+            // ✅ አዲስ: የቀን ስጦታ መጠየቂያ Event Listener
+            const claimBtn = document.getElementById('claimBonusBtn');
+            if (claimBtn) {
+                claimBtn.addEventListener('click', async () => {
+                    const btn = document.getElementById('claimBonusBtn');
+                    const msg = document.getElementById('bonusMessage');
+                    
+                    btn.disabled = true;
+                    btn.innerText = '⏳ Processing...';
+                    
+                    try {
+                        const response = await fetch('https://fight-p2p.onrender.com/api/daily-bonus/claim', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (response.ok) {
+                            userPoints = data.newBalance;
+                            localStorage.setItem('balance', userPoints);
+                            updateBalance();
+                            btn.innerText = '🎁 Bonus Claimed';
+                            msg.innerText = `✅ ${data.message}`;
+                            msg.style.color = '#4ecca3';
+                            
+                            setTimeout(() => window.location.reload(), 2000);
+                        } else {
+                            btn.disabled = false;
+                            btn.innerText = '🎁 Claim Daily Bonus (+50 Points)';
+                            msg.innerText = `❌ ${data.message}`;
+                            msg.style.color = '#e94560';
+                        }
+                    } catch (error) {
+                        btn.disabled = false;
+                        btn.innerText = '🎁 Claim Daily Bonus (+50 Points)';
+                        msg.innerText = '❌ Network error. Please try again.';
+                        msg.style.color = '#e94560';
+                    }
+                });
+            }
         });
     </script>
 </body>
