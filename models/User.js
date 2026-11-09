@@ -24,7 +24,11 @@ const userSchema = new mongoose.Schema({
   },
   balance: {
     type: Number,
-    default: 1000 // ✅ ማስተካከያ: ከ 0 ወደ 1000 ተቀይሯል!
+    default: 1000 // ✅ መነሻ ሂሳብ
+  },
+  lastDailyBonus: {
+    type: Date,
+    default: null // ✅ አዲስ: የመጨረሻው የቀን ስጦታ የተሰጠበት ቀን
   },
   createdAt: {
     type: Date,
