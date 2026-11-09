@@ -38,12 +38,14 @@ const Bet = require('./models/Bet');
 // 4. Import Routes
 const authRoutes = require('./routes/auth');
 const betRoutes = require('./routes/bet'); 
-const adRoutes = require('./routes/ads'); // ✅ አዲስ: የማስታወቂያ ሩት
+const adRoutes = require('./routes/ads'); 
+const leaderboardRoutes = require('./routes/leaderboard'); // ✅ አዲስ: የ Leaderboard ሩት
 
 // 5. Use Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/bets', betRoutes); 
-app.use('/api/ads', adRoutes); // ✅ አዲስ: የማስታወቂያ ሩት መጠቀም
+app.use('/api/ads', adRoutes); 
+app.use('/api/leaderboard', leaderboardRoutes); // ✅ አዲስ: የ Leaderboard ሩት መጠቀም
 
 // =================================================================
 // ለአሁኑ የቆየ (Legacy) ኮድ - ለ Socket.io ሙከራ እስኪፈልጉት ድረስ ይቆያል
