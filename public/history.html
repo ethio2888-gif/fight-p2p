@@ -15,6 +15,32 @@
         .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9em; text-decoration: none; display: inline-block; transition: all 0.3s; }
         .btn-home { background: linear-gradient(135deg, #4ecca3 0%, #3fa890 100%); color: #0f0f1a; }
         .btn-logout { background: linear-gradient(135deg, #e94560 0%, #c73650 100%); color: white; }
+        
+        /* ✅ አዲስ: የ Cancel ቁልፍ ዲዛይን */
+        .btn-cancel { 
+            padding: 8px 15px; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 0.85em; 
+            transition: all 0.3s; 
+            margin-top: 10px;
+            background: linear-gradient(135deg, #e94560 0%, #c73650 100%);
+            color: white;
+            width: 100%;
+        }
+        .btn-cancel:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(233, 69, 96, 0.4);
+        }
+        .btn-cancel:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
 
         header { text-align: center; padding: 30px 0; border-bottom: 3px solid #ffd700; margin-bottom: 30px; }
         h1 { font-size: 2.2em; color: #ffd700; text-transform: uppercase; letter-spacing: 2px; }
@@ -29,6 +55,7 @@
             display: flex;
             flex-direction: column;
             gap: 10px;
+            transition: opacity 0.3s;
         }
 
         .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
@@ -39,6 +66,7 @@
         .status-matched { background: rgba(0, 191, 255, 0.2); color: #00bfff; border: 1px solid #00bfff; }
         .status-won { background: rgba(78, 204, 163, 0.2); color: #4ecca3; border: 1px solid #4ecca3; }
         .status-lost { background: rgba(233, 69, 96, 0.2); color: #e94560; border: 1px solid #e94560; }
+        .status-cancelled { background: rgba(136, 136, 136, 0.2); color: #888; border: 1px solid #888; }
 
         .card-body { display: flex; justify-content: space-between; align-items: center; }
         .bet-details { display: flex; flex-direction: column; gap: 5px; }
@@ -73,7 +101,7 @@
     <script>
         const token = localStorage.getItem('token');
         const username = localStorage.getItem('username');
-        const userPoints = parseInt(localStorage.getItem('balance')) || 0;
+        let userPoints = parseInt(localStorage.getItem('balance')) || 0;
 
         // 🔒 Security First: ተጠቃሚው ካልገባ ወደ login ይላክ
         if (!token || !username) {
@@ -122,6 +150,7 @@
             bets.forEach(bet => {
                 const card = document.createElement('div');
                 card.className = 'history-card';
+                card.id = `bet-card-${bet._id}`;
 
                 // Status mapping
                 let statusClass = 'status-open';
@@ -139,10 +168,21 @@
                     statusClass = 'status-lost';
                     statusText = 'Lost (ተሳነሃል)';
                     winDisplay = `<div class="win-label">Lost</div><div class="win-amount" style="color: #e94560;">-${bet.amount} pts</div>`;
+                } else if (bet.status === 'cancelled') {
+                    statusClass = 'status-cancelled';
+                    statusText = 'Cancelled (ተሰርዟል)';
+                    winDisplay = `<div class="win-label">Refunded</div><div class="win-amount" style="color: #888;">${bet.amount} pts</div>`;
                 }
 
                 const date = new Date(bet.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 const choiceColor = bet.fighterChoice === 'red' ? '#ff0000' : '#ffd700';
+                
+                // ✅ አዲስ: የ Cancel ቁልፍ ለፈጣሪው ብቻ ይታያል (Defense in Depth)
+                const isCreator = bet.creator && bet.creator.username === username;
+                let cancelBtn = '';
+                if (bet.status === 'open' && isCreator) {
+                    cancelBtn = `<button class="btn btn-cancel" onclick="cancelBet('${bet._id}', this)">❌ Cancel & Refund</button>`;
+                }
 
                 card.innerHTML = `
                     <div class="card-header">
@@ -158,9 +198,69 @@
                             ${winDisplay}
                         </div>
                     </div>
+                    ${cancelBtn}
                 `;
                 container.appendChild(card);
             });
+        }
+
+        // ✅ አዲስ: ውርርድ የመሰረዝ ፈንክሽን
+        async function cancelBet(betId, btnElement) {
+            if (!confirm('Are you sure you want to cancel this bet and refund your points?')) {
+                return;
+            }
+
+            const originalText = btnElement.innerText;
+            btnElement.disabled = true;
+            btnElement.innerText = '⏳ Canceling...';
+
+            try {
+                const response = await fetch(`https://fight-p2p.onrender.com/api/bets/cancel/${betId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Update local balance
+                    userPoints = data.newBalance;
+                    localStorage.setItem('balance', userPoints);
+                    
+                    // Update UI balance
+                    const userInfoDiv = document.getElementById('userInfo');
+                    userInfoDiv.innerHTML = `Welcome, <span>${username}</span>! | Balance: <span>${userPoints}</span> Pts`;
+
+                    // Update card UI
+                    const card = btnElement.closest('.history-card');
+                    card.style.opacity = '0.6';
+                    btnElement.innerText = '✅ Cancelled & Refunded';
+                    btnElement.style.background = '#4ecca3';
+                    btnElement.style.color = '#000';
+                    
+                    // Remove card after short delay
+                    setTimeout(() => {
+                        card.remove();
+                        const container = document.getElementById('history-container');
+                        if (container.children.length === 0) {
+                            container.innerHTML = '<div class="empty-state">📭 እስካሁን ምንም ውርርድ አላደረግህም።</div>';
+                        }
+                    }, 1500);
+
+                } else {
+                    alert('❌ ' + (data.message || 'Failed to cancel bet'));
+                    btnElement.disabled = false;
+                    btnElement.innerText = originalText;
+                }
+            } catch (error) {
+                console.error('Cancel bet error:', error);
+                alert('❌ Network error. Please try again.');
+                btnElement.disabled = false;
+                btnElement.innerText = originalText;
+            }
         }
 
         loadHistory();
