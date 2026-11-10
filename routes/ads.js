@@ -43,7 +43,7 @@ router.get('/', async (req, res) => {
         { endDate: { $exists: false } },
         { endDate: { $gte: now } }
       ]
-    }).select('title imageUrl targetUrl'); // ✅ Security: ሚስጥራዊ መረጃዎችን (addedBy, _id) አያካትትም
+    }).select('title imageUrl targetUrl'); 
     
     res.json(ads);
   } catch (error) {
@@ -56,12 +56,10 @@ router.post('/', authenticateToken, async (req, res) => {
   try {
     const { title, imageUrl, targetUrl, endDate } = req.body;
     
-    // ✅ Security: Input Validation
     if (!title || !imageUrl || !targetUrl) {
       return res.status(400).json({ message: 'ርዕስ፣ የምስል ሊንክ እና የሚሄድበት ሊንክ ያስፈልጋሉ' });
     }
 
-    // 🔒 SECURITY FIRST: ሊንኮቹ ትክክለኛ HTTP/HTTPS መሆናቸውን ማረጋገጥ
     if (!isValidUrl(imageUrl) || !isValidUrl(targetUrl)) {
       return res.status(400).json({ message: 'የምስል ሊንክ እና የሚሄድበት ሊንክ ትክክለኛ የ HTTP/HTTPS ሊንክ መሆን አለባቸው' });
     }
@@ -86,7 +84,6 @@ router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const { isActive } = req.body;
     
-    // ✅ Security: isActive ብቻ boolean መሆኑን ማረጋገጥ
     if (typeof isActive !== 'boolean') {
       return res.status(400).json({ message: 'isActive የ boolean ዋጋ መሆን አለበት' });
     }
@@ -95,7 +92,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
       req.params.id, 
       { isActive }, 
       { new: true }
-    ).select('title imageUrl targetUrl isActive'); // ✅ Security: ሚስጥራዊ መረጃ አለመመለስ
+    ).select('title imageUrl targetUrl isActive'); 
     
     if (!ad) {
       return res.status(404).json({ message: 'ማስታወቂያው አልተገኘም' });
@@ -104,6 +101,20 @@ router.put('/:id', authenticateToken, async (req, res) => {
     res.json({ message: 'የማስታወቂያው ሁኔታ ተቀይሯል', ad });
   } catch (error) {
     res.status(500).json({ message: 'የሰርቨር ስህተት', error: error.message });
+  }
+});
+
+// ⚠️ TEMPORARY: ይህንን ሊንክ አንድ ጊዜ ከከፈትክ በኋላ ማስታወቂያውን ይሰርዛል (ከተጠቀምክ በኋላ ይህንን ክፍል ሰርዝ)
+router.get('/delete-test-ad', async (req, res) => {
+  try {
+    const result = await Ad.deleteMany({ title: "Test Ad from Mobile" });
+    if (result.deletedCount > 0) {
+      res.json({ message: "✅ Test ad successfully deleted from database!" });
+    } else {
+      res.json({ message: "ℹ️ No test ad found in the database." });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "Error deleting test ad", error: error.message });
   }
 });
 
