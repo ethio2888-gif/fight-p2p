@@ -3,458 +3,270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fight P2P - Boxing Betting Platform</title>
+    <title>Fight P2P - Premium Boxing Betting</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        /* --- Modern Reset & Base --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-            color: #ffffff;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at 10% 20%, #1a1a2e 0%, #0f0f1a 90%);
+            color: #e0e0e0;
             min-height: 100vh;
             padding: 20px;
+            line-height: 1.6;
         }
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
+        .container { max-width: 850px; margin: 0 auto; }
+
+        /* --- Glassmorphism Utility --- */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
+        /* --- User Bar --- */
         .user-bar {
-            background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
-            padding: 15px 25px;
-            border-radius: 10px;
+            padding: 16px 24px;
             margin-bottom: 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border: 2px solid #e94560;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            border-left: 4px solid #e94560;
         }
 
-        .user-info {
-            font-size: 1.1em;
-            font-weight: bold;
-        }
+        .user-info { font-size: 1.05em; font-weight: 600; color: #ffffff; }
+        .user-info span { color: #4ecca3; font-weight: 700; }
 
-        .user-info span {
-            color: #4ecca3;
-            font-weight: bold;
-        }
-
+        /* --- Buttons --- */
         .btn {
             padding: 10px 20px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 600;
             font-size: 0.9em;
             text-decoration: none;
             display: inline-block;
-            transition: all 0.3s;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
+        .btn:active { transform: translateY(0); }
 
-        .btn-login {
-            background: linear-gradient(135deg, #4ecca3 0%, #3fa890 100%);
-            color: #0f0f1a;
-        }
+        .btn-login { background: linear-gradient(135deg, #4ecca3 0%, #3fa890 100%); color: #0f0f1a; }
+        .btn-logout { background: linear-gradient(135deg, #e94560 0%, #c73650 100%); color: white; }
 
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(78, 204, 163, 0.4);
-        }
-
-        .btn-logout {
-            background: linear-gradient(135deg, #e94560 0%, #c73650 100%);
-            color: white;
-        }
-
-        .btn-logout:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(233, 69, 96, 0.4);
-        }
-
-        .ads-container {
-            margin-bottom: 30px;
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .ad-banner {
-            width: 100%;
-            max-width: 728px;
-            min-height: 90px;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-            border: 1px solid #ffd700;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            position: relative;
-            transition: transform 0.3s, box-shadow 0.3s;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        .ad-banner:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
-        }
-
-        .ad-banner img {
-            max-width: 100%;
-            max-height: 150px;
-            object-fit: contain;
-        }
-
-        .ad-label {
-            position: absolute;
-            top: 4px;
-            right: 6px;
-            font-size: 0.65em;
-            color: #aaa;
-            background: rgba(0, 0, 0, 0.6);
-            padding: 2px 6px;
-            border-radius: 3px;
-            text-transform: uppercase;
-        }
-
-        header {
-            text-align: center;
-            padding: 30px 0;
-            border-bottom: 3px solid #ff0000;
-            margin-bottom: 30px;
-        }
-
+        /* --- Header --- */
+        header { text-align: center; padding: 40px 0 30px; margin-bottom: 20px; }
         h1 {
-            font-size: 2.5em;
-            color: #ffd700;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            text-shadow: 2px 2px 4px rgba(255, 0, 0, 0.5);
-        }
-
-        .tagline {
-            color: #ff0000;
-            font-size: 1.2em;
-            margin-top: 10px;
-        }
-
-        .user-balance {
+            font-size: 2.8em;
+            font-weight: 800;
             background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
-            color: #000;
-            padding: 15px 25px;
-            border-radius: 10px;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+        .tagline { color: #888; font-size: 1.1em; font-weight: 400; }
+
+        /* --- Balance --- */
+        .user-balance {
             text-align: center;
-            margin-bottom: 20px;
-            font-weight: bold;
+            padding: 25px;
+            margin-bottom: 25px;
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, rgba(255, 140, 0, 0.05) 100%);
+            border: 1px solid rgba(255, 215, 0, 0.3);
         }
+        .user-balance > div:first-child { font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; color: #ffd700; margin-bottom: 5px; }
+        .balance-amount { font-size: 2.5em; font-weight: 800; color: #ffffff; text-shadow: 0 0 20px rgba(255, 215, 0, 0.3); }
 
-        .balance-amount {
-            font-size: 2em;
-            color: #ff0000;
-        }
-
-        /* ✅ አዲስ: የቀን ስጦታ ዲዛይን */
+        /* --- Daily Bonus --- */
         .daily-bonus-container {
             text-align: center;
             margin-bottom: 30px;
-            padding: 15px;
-            background: rgba(255, 215, 0, 0.1);
-            border: 1px dashed #ffd700;
-            border-radius: 10px;
+            padding: 20px;
+            background: rgba(255, 215, 0, 0.05);
+            border: 1px dashed rgba(255, 215, 0, 0.4);
         }
-
         .bonus-btn {
             background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
-            color: black;
+            color: #000;
             font-size: 1.1em;
-            padding: 12px 30px;
-            border: 2px solid #ffd700;
+            padding: 14px 32px;
+            border: none;
+            font-weight: 700;
         }
         .bonus-btn:disabled {
-            background: #333;
-            color: #888;
-            border-color: #555;
+            background: #2a2a2a;
+            color: #666;
+            border: 1px solid #444;
             cursor: not-allowed;
-            opacity: 0.7;
+            transform: none;
+            box-shadow: none;
         }
 
-        .fights-section {
-            margin-bottom: 40px;
+        /* --- Ads --- */
+        .ads-container { margin-bottom: 35px; display: flex; flex-direction: column; gap: 15px; align-items: center; }
+        .ad-banner {
+            width: 100%; max-width: 728px; min-height: 90px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            display: flex; align-items: center; justify-content: center;
+            overflow: hidden; position: relative;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        .ad-banner:hover { border-color: #ffd700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.1); }
+        .ad-banner img { max-width: 100%; max-height: 120px; object-fit: contain; }
+        .ad-label {
+            position: absolute; top: 6px; right: 8px;
+            font-size: 0.6em; color: #666; background: rgba(0,0,0,0.5);
+            padding: 2px 6px; border-radius: 4px; text-transform: uppercase;
         }
 
+        /* --- Fights Section --- */
+        .fights-section { margin-bottom: 50px; }
         .section-title {
-            font-size: 1.8em;
-            color: #ffd700;
-            margin-bottom: 20px;
-            padding-left: 15px;
-            border-left: 4px solid #ff0000;
+            font-size: 1.6em; font-weight: 700; color: #ffffff;
+            margin-bottom: 25px; padding-left: 15px;
+            border-left: 4px solid #e94560;
         }
 
         .fight-card {
-            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-            border: 2px solid #333;
-            border-radius: 15px;
             padding: 25px;
             margin-bottom: 25px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+        .fight-card:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); border-color: rgba(255, 255, 255, 0.15); }
 
-        .fight-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
+        .fight-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 10px; }
+        .fight-date { background: rgba(233, 69, 96, 0.15); color: #e94560; padding: 6px 14px; border-radius: 20px; font-weight: 600; font-size: 0.9em; }
 
-        .fight-date {
-            background: #ff0000;
-            padding: 8px 15px;
-            border-radius: 5px;
-            font-weight: bold;
-        }
+        .fighters { display: flex; justify-content: space-around; align-items: center; margin-bottom: 25px; flex-wrap: wrap; }
+        .fighter { text-align: center; flex: 1; min-width: 120px; padding: 15px; }
+        .fighter-photo { font-size: 3.5em; margin-bottom: 10px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
+        .fighter-name { font-size: 1.2em; font-weight: 700; color: #ffffff; margin-bottom: 4px; }
+        .fighter-record { color: #888; font-size: 0.85em; font-weight: 500; }
+        .vs { font-size: 1.8em; font-weight: 800; color: #e94560; padding: 0 15px; text-shadow: 0 0 15px rgba(233, 69, 96, 0.4); }
 
-        .fighters {
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .fighter {
-            text-align: center;
-            flex: 1;
-            min-width: 120px;
-            padding: 15px;
-        }
-
-        .fighter-photo {
-            font-size: 4em;
-            margin-bottom: 10px;
-        }
-
-        .fighter-name {
-            font-size: 1.3em;
-            font-weight: bold;
-            color: #ffd700;
-            margin-bottom: 5px;
-        }
-
-        .fighter-record {
-            color: #888;
-            font-size: 0.9em;
-        }
-
-        .vs {
-            font-size: 2em;
-            font-weight: bold;
-            color: #ff0000;
-            padding: 0 20px;
-            text-shadow: 2px 2px 4px rgba(255, 0, 0, 0.8);
-        }
-
+        /* --- Betting Section --- */
         .betting-section {
-            background: #0a0a0a;
+            background: rgba(0, 0, 0, 0.2);
             padding: 20px;
-            border-radius: 10px;
-            margin-top: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
-
-        .bet-amount-selector { 
-            margin-bottom: 15px; 
-            text-align: center; 
-            background: #1a1a1a; 
-            padding: 15px; 
-            border-radius: 8px; 
-            border: 1px solid #333; 
-        }
-        .quick-bet-btn { 
-            background: #333; 
-            color: #ffd700; 
-            border: 1px solid #ffd700; 
-            padding: 8px 15px; 
-            border-radius: 5px; 
-            cursor: pointer; 
-            font-weight: bold; 
-            transition: all 0.2s; 
-            margin: 3px; 
-        }
-        .quick-bet-btn:hover { 
-            background: #ffd700; 
-            color: #000; 
-        }
-        .custom-bet-input { 
-            width: 100%; 
-            max-width: 250px; 
-            padding: 10px; 
-            border-radius: 5px; 
-            border: 1px solid #ffd700; 
-            background: #0a0a0a; 
-            color: #fff; 
-            text-align: center; 
-            font-size: 1.1em; 
-            font-weight: bold; 
-            margin-top: 10px; 
-        }
-        .custom-bet-input:focus { 
-            outline: none; 
-            box-shadow: 0 0 8px rgba(255, 215, 0, 0.5); 
-        }
-
-        .bet-buttons {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 15px;
-        }
-
-        .bet-btn {
-            flex: 1;
-            min-width: 150px;
-            padding: 15px 25px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1em;
-            font-weight: bold;
+        .bet-amount-selector { margin-bottom: 20px; text-align: center; }
+        .bet-amount-selector label { color: #ffd700; font-weight: 600; display: block; margin-bottom: 12px; font-size: 0.95em; }
+        
+        .quick-bet-btn {
+            background: rgba(255, 255, 255, 0.05);
+            color: #ffd700;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
             cursor: pointer;
-            transition: all 0.3s;
-            text-transform: uppercase;
+            font-weight: 600;
+            font-size: 0.9em;
+            transition: all 0.2s;
+            margin: 4px;
         }
+        .quick-bet-btn:hover { background: #ffd700; color: #000; border-color: #ffd700; }
 
-        .bet-btn-fighter1 {
-            background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
-            color: white;
-        }
-
-        .bet-btn-fighter2 {
-            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
-            color: black;
-        }
-
-        .bet-btn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-        }
-
-        .bet-btn:active:not(:disabled) {
-            transform: translateY(0);
-        }
-
-        .bet-btn:disabled {
-            background: #333;
-            color: #666;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        .current-bets {
-            margin-top: 15px;
-            padding: 15px;
-            background: #1a1a1a;
+        .custom-bet-input {
+            width: 100%; max-width: 280px;
+            padding: 12px;
             border-radius: 8px;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: 700;
+            margin-top: 12px;
+            transition: all 0.3s;
         }
+        .custom-bet-input:focus { outline: none; border-color: #ffd700; box-shadow: 0 0 12px rgba(255, 215, 0, 0.2); }
 
-        .bet-item {
-            padding: 10px;
-            margin: 5px 0;
-            background: #2a2a2a;
-            border-radius: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .bet-buttons { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 20px; }
+        .bet-btn {
+            flex: 1; min-width: 160px;
+            padding: 16px 20px;
+            border: none; border-radius: 10px;
+            font-size: 1em; font-weight: 700;
+            cursor: pointer; transition: all 0.3s;
+            text-transform: uppercase; letter-spacing: 0.5px;
         }
+        .bet-btn-fighter1 { background: linear-gradient(135deg, #e94560 0%, #c73650 100%); color: white; }
+        .bet-btn-fighter2 { background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #000; }
+        .bet-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4); }
+        .bet-btn:disabled { background: #2a2a2a; color: #555; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        .status-upcoming {
-            color: #00ff00;
-        }
+        .current-bets { margin-top: 20px; padding: 15px; background: rgba(255, 255, 255, 0.03); border-radius: 8px; }
+        .bet-item { padding: 10px; margin: 6px 0; background: rgba(0, 0, 0, 0.2); border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9em; }
 
-        .status-live {
-            color: #ff0000;
-            animation: pulse 1s infinite;
-        }
-
+        /* --- Messages & Status --- */
+        .status-upcoming { color: #4ecca3; font-weight: 600; }
+        .status-live { color: #e94560; font-weight: 700; animation: pulse 1.5s infinite; }
+        
         .message {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 6px;
-            display: none;
-            text-align: center;
-            font-weight: bold;
+            margin-top: 15px; padding: 12px; border-radius: 8px;
+            display: none; text-align: center; font-weight: 600; font-size: 0.95em;
         }
+        .message.success { background-color: rgba(78, 204, 163, 0.15); color: #4ecca3; border: 1px solid rgba(78, 204, 163, 0.3); }
+        .message.error { background-color: rgba(233, 69, 96, 0.15); color: #e94560; border: 1px solid rgba(233, 69, 96, 0.3); }
 
-        .message.success { 
-            background-color: rgba(78, 204, 163, 0.2); 
-            color: #4ecca3; 
-            border: 1px solid #4ecca3; 
-        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
 
-        .message.error { 
-            background-color: rgba(233, 69, 96, 0.2); 
-            color: #e94560; 
-            border: 1px solid #e94560; 
-        }
+        /* --- Footer --- */
+        footer { text-align: center; padding: 40px 20px; border-top: 1px solid rgba(255, 255, 255, 0.05); margin-top: 40px; color: #555; font-size: 0.9em; }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        footer {
-            text-align: center;
-            padding: 30px;
-            border-top: 2px solid #333;
-            margin-top: 40px;
-            color: #666;
-        }
-
+        /* --- Responsive --- */
         @media (max-width: 600px) {
-            h1 { font-size: 2em; }
-            .fighters { flex-direction: column; }
-            .vs { padding: 10px 0; }
+            h1 { font-size: 2.2em; }
+            .fighters { flex-direction: column; gap: 10px; }
+            .vs { padding: 5px 0; font-size: 1.5em; }
             .bet-buttons { flex-direction: column; }
             .bet-btn { width: 100%; }
-            .user-bar { flex-direction: column; gap: 10px; text-align: center; }
+            .user-bar { flex-direction: column; gap: 15px; text-align: center; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="user-bar" id="userBar">
+        <!-- User Bar -->
+        <div class="user-bar glass-panel" id="userBar">
             <div class="user-info" id="userInfo"></div>
             <div id="authButtons"></div>
         </div>
 
         <header>
             <h1>🥊 Fight P2P</h1>
-            <p class="tagline">Peer-to-Peer Boxing Betting Arena</p>
+            <p class="tagline">Premium Peer-to-Peer Boxing Betting Arena</p>
         </header>
 
-        <div class="user-balance">
+        <!-- Balance -->
+        <div class="user-balance glass-panel">
             <div>Your Balance</div>
             <div class="balance-amount" id="balanceAmount">1,000 Points</div>
         </div>
 
-        <!-- ✅ አዲስ: የቀን ስጦታ ክፍል -->
-        <div id="daily-bonus-container" class="daily-bonus-container" style="display: none;">
+        <!-- Daily Bonus -->
+        <div id="daily-bonus-container" class="daily-bonus-container glass-panel" style="display: none;">
             <button id="claimBonusBtn" class="btn bonus-btn">
                 🎁 Claim Daily Bonus (+50 Points)
             </button>
-            <p id="bonusMessage" style="margin-top: 10px; color: #888; font-size: 0.9em;"></p>
+            <p id="bonusMessage" style="margin-top: 12px; color: #888; font-size: 0.9em;"></p>
         </div>
 
+        <!-- Ads -->
         <div id="ads-container" class="ads-container"></div>
 
+        <!-- Fights -->
         <div class="fights-section">
             <h2 class="section-title">🔥 Upcoming Fights</h2>
             <div id="fights-container"></div>
@@ -462,11 +274,14 @@
 
         <footer>
             <p>© 2026 Fight P2P - Bet Responsibly</p>
-            <p style="margin-top: 10px; font-size: 0.9em;">Virtual Points System - No Real Money</p>
+            <p style="margin-top: 8px; font-size: 0.85em; opacity: 0.7;">Virtual Points System - No Real Money</p>
         </footer>
     </div>
 
     <script>
+        // ==========================================
+        // 🔒 SECURITY FIRST: All logic preserved exactly as before
+        // ==========================================
         let userPoints = parseInt(localStorage.getItem('balance')) || 1000;
         const token = localStorage.getItem('token');
         const username = localStorage.getItem('username');
@@ -484,7 +299,7 @@
                     <button class="btn btn-logout" onclick="logout()">Logout</button>
                 `;
                 updateBalance();
-                checkDailyBonusStatus(); // ✅ አዲስ: የቀን ስጦታ ሁኔታን ማረጋገጥ
+                checkDailyBonusStatus();
             } else {
                 userInfoDiv.innerHTML = `Welcome, Guest!`;
                 authButtonsDiv.innerHTML = `<a href="/login.html" class="btn btn-login">Login / Register</a>`;
@@ -507,12 +322,11 @@
                 const originalText = btn.innerHTML;
                 if (!originalText.includes('LOGIN TO BET')) {
                     btn.dataset.originalText = originalText;
-                    btn.innerHTML = 'LOGIN TO BET<br><small>Please login first</small>';
+                    btn.innerHTML = 'LOGIN TO BET<br><small style="font-size:0.8em; font-weight:400;">Please login first</small>';
                 }
             });
         }
 
-        // ✅ አዲስ: የቀን ስጦታ ሁኔታን ከ Backend ማረጋገጥ
         async function checkDailyBonusStatus() {
             if (!token) return;
             try {
@@ -526,7 +340,6 @@
                     const msg = document.getElementById('bonusMessage');
                     
                     container.style.display = 'block';
-                    
                     if (data.isReady) {
                         btn.disabled = false;
                         btn.innerText = '🎁 Claim Daily Bonus (+50 Points)';
@@ -555,22 +368,8 @@
 
         function getSampleFights() {
             return [
-                {
-                    id: 1,
-                    fighter1: { name: 'Ethiopian Lion', record: '15-2-0', photo: '🦁' },
-                    fighter2: { name: 'African Thunder', record: '12-3-1', photo: '⚡' },
-                    date: '2026-11-15',
-                    status: 'upcoming',
-                    bets: []
-                },
-                {
-                    id: 2,
-                    fighter1: { name: 'Addis Warrior', record: '10-1-0', photo: '🛡️' },
-                    fighter2: { name: 'Nile Storm', record: '8-4-2', photo: '🌊' },
-                    date: '2026-11-20',
-                    status: 'upcoming',
-                    bets: []
-                }
+                { id: 1, fighter1: { name: 'Ethiopian Lion', record: '15-2-0', photo: '🦁' }, fighter2: { name: 'African Thunder', record: '12-3-1', photo: '⚡' }, date: '2026-11-15', status: 'upcoming', bets: [] },
+                { id: 2, fighter1: { name: 'Addis Warrior', record: '10-1-0', photo: '🛡️' }, fighter2: { name: 'Nile Storm', record: '8-4-2', photo: '🌊' }, date: '2026-11-20', status: 'upcoming', bets: [] }
             ];
         }
 
@@ -599,18 +398,13 @@
                 });
             });
 
-            betBtn1.addEventListener('click', () => {
-                placeBet(fight.fighter1.name, 'red', fight.id, msgDiv);
-            });
-
-            betBtn2.addEventListener('click', () => {
-                placeBet(fight.fighter2.name, 'blue', fight.id, msgDiv);
-            });
+            betBtn1.addEventListener('click', () => placeBet(fight.fighter1.name, 'red', fight.id, msgDiv));
+            betBtn2.addEventListener('click', () => placeBet(fight.fighter2.name, 'blue', fight.id, msgDiv));
         }
 
         function createFightCard(fight) {
             const card = document.createElement('div');
-            card.className = 'fight-card';
+            card.className = 'fight-card glass-panel';
             const statusClass = fight.status === 'live' ? 'status-live' : 'status-upcoming';
             const statusText = fight.status === 'live' ? '🔴 LIVE' : '📅 UPCOMING';
 
@@ -634,8 +428,8 @@
                 </div>
                 <div class="betting-section">
                     <div class="bet-amount-selector">
-                        <label style="color: #ffd700; font-weight: bold; display: block; margin-bottom: 10px;">Select Bet Amount (Min: 50, Max: 10,000)</label>
-                        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px;">
+                        <label>Select Bet Amount (Min: 50, Max: 10,000)</label>
+                        <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 10px;">
                             <button class="quick-bet-btn" data-amount="50">50</button>
                             <button class="quick-bet-btn" data-amount="100">100</button>
                             <button class="quick-bet-btn" data-amount="200">200</button>
@@ -644,20 +438,15 @@
                         </div>
                         <input type="number" class="custom-bet-input" placeholder="Or enter custom amount" min="50" max="10000" value="100">
                     </div>
-                    
                     <div class="bet-buttons">
-                        <button class="bet-btn bet-btn-fighter1">
-                            Bet on ${fight.fighter1.name}
-                        </button>
-                        <button class="bet-btn bet-btn-fighter2">
-                            Bet on ${fight.fighter2.name}
-                        </button>
+                        <button class="bet-btn bet-btn-fighter1">Bet on ${fight.fighter1.name}</button>
+                        <button class="bet-btn bet-btn-fighter2">Bet on ${fight.fighter2.name}</button>
                     </div>
                     <div class="message"></div>
                     ${fight.bets.length > 0 ? `
                         <div class="current-bets">
-                            <strong>Current Bets:</strong>
-                            ${fight.bets.map(bet => `<div class="bet-item"><span>${bet.fighter}</span><span>${bet.amount} pts</span></div>`).join('')}
+                            <strong style="color:#888; font-size:0.85em; display:block; margin-bottom:8px;">Current Bets:</strong>
+                            ${fight.bets.map(bet => `<div class="bet-item"><span>${bet.fighter}</span><span style="color:#ffd700; font-weight:600;">${bet.amount} pts</span></div>`).join('')}
                         </div>
                     ` : ''}
                 </div>
@@ -666,7 +455,7 @@
         }
 
         function formatDate(dateString) {
-            return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+            return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
         }
 
         async function placeBet(fighterName, fighterChoice, fightId, messageDiv) {
@@ -680,6 +469,7 @@
             const amountInput = card.querySelector('.custom-bet-input');
             const betAmount = parseInt(amountInput.value);
 
+            // 🔒 SECURITY FIRST: Frontend Validation
             if (isNaN(betAmount) || betAmount < 50) {
                 showMessage(messageDiv, 'error', '❌ Minimum bet is 50 points!');
                 return;
@@ -751,30 +541,23 @@
                 container.style.display = 'none';
                 return;
             }
-            
             container.innerHTML = '';
             ads.forEach(ad => {
                 const adLink = document.createElement('a');
-                adLink.className = 'ad-banner';
+                adLink.className = 'ad-banner glass-panel';
                 adLink.href = ad.targetUrl;
                 adLink.target = '_blank';
                 adLink.rel = 'noopener noreferrer';
-                
-                adLink.innerHTML = `
-                    <span class="ad-label">Ad</span>
-                    <img src="${ad.imageUrl}" alt="${ad.title}">
-                `;
+                adLink.innerHTML = `<span class="ad-label">Ad</span><img src="${ad.imageUrl}" alt="${ad.title}">`;
                 container.appendChild(adLink);
             });
         }
 
-        // ========== Page Load ==========
         document.addEventListener('DOMContentLoaded', () => {
             initializeUserInterface();
             loadFights();
             loadAds();
             
-            // ✅ አዲስ: የቀን ስጦታ መጠየቂያ Event Listener
             const claimBtn = document.getElementById('claimBonusBtn');
             if (claimBtn) {
                 claimBtn.addEventListener('click', async () => {
@@ -792,7 +575,6 @@
                                 'Authorization': `Bearer ${token}`
                             }
                         });
-                        
                         const data = await response.json();
                         
                         if (response.ok) {
@@ -802,7 +584,6 @@
                             btn.innerText = '🎁 Bonus Claimed';
                             msg.innerText = `✅ ${data.message}`;
                             msg.style.color = '#4ecca3';
-                            
                             setTimeout(() => window.location.reload(), 2000);
                         } else {
                             btn.disabled = false;
