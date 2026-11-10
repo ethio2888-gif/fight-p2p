@@ -34,25 +34,29 @@ app.use(express.static(path.join(__dirname, 'public')));
 const Organization = require('./models/Organization');
 const Event = require('./models/Event');
 const Bet = require('./models/Bet');
+const Fight = require('./models/Fight'); // ✅ አዲስ: Fight Model
 
 // 4. Import Routes
 const authRoutes = require('./routes/auth');
 const betRoutes = require('./routes/bet'); 
 const adRoutes = require('./routes/ads'); 
 const leaderboardRoutes = require('./routes/leaderboard'); 
-const dailyBonusRoutes = require('./routes/dailyBonus'); // ✅ አዲስ: የቀን ስጦታ ሩት
+const dailyBonusRoutes = require('./routes/dailyBonus');
+const fightRoutes = require('./routes/fights'); // ✅ አዲስ: Fight Routes
 
 // 5. Use Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/bets', betRoutes); 
 app.use('/api/ads', adRoutes); 
 app.use('/api/leaderboard', leaderboardRoutes); 
-app.use('/api/daily-bonus', dailyBonusRoutes); // ✅ አዲስ: የቀን ስጦታ ሩት መጠቀም
+app.use('/api/daily-bonus', dailyBonusRoutes);
+app.use('/api/fights', fightRoutes); // ✅ አዲስ: Fight Routes መጠቀም (ይህ ከዳታቤዝ ያነባል)
 
 // =================================================================
 // ለአሁኑ የቆየ (Legacy) ኮድ - ለ Socket.io ሙከራ እስኪፈልጉት ድረስ ይቆያል
+// ማሳሰቢያ: /api/fights ጥያቄ አሁን ከላይ ባለው fightRoutes ይያዛል (ከዳታቤዝ)
 // =================================================================
-let fights = [
+let legacyFights = [
   {
     id: 1,
     fighter1: { name: 'Ethiopian Lion', record: '15-2-0', photo: '🦁' },
@@ -73,20 +77,19 @@ let fights = [
 
 let users = [];
 
-app.get('/api/fights', (req, res) => {
-  res.json(fights);
-});
+// ማሳሰቢያ: ይህ መስመር ተወግዷል ምክንያቱም አሁን `fightRoutes` `/api/fights`ን ይይዛል
+// app.get('/api/fights', (req, res) => { res.json(fights); });
 
 app.get('/api/users', (req, res) => {
   res.json(users);
 });
 
-// Socket.io for real-time updates
+// Socket.io for real-time updates (እስካሁን legacyFightsን ይጠቀማል)
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
   socket.on('place_bet', (data) => {
-    const fight = fights.find(f => f.id === data.fightId);
+    const fight = legacyFights.find(f => f.id === data.fightId);
     if (fight) {
       fight.bets.push({
         userId: socket.id,
