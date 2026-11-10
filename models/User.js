@@ -30,6 +30,11 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: null // ✅ አዲስ: የመጨረሻው የቀን ስጦታ የተሰጠበት ቀን
   },
+  // 🔒 SECURITY FIRST: አድሚን ማንነትን የሚለይ መስክ (በነባሪነት false ነው)
+  isAdmin: {
+    type: Boolean,
+    default: false
+  },
   createdAt: {
     type: Date,
     default: Date.now
