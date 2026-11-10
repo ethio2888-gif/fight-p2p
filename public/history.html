@@ -5,92 +5,166 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fight P2P - Bet History</title>
     <style>
+        /* --- Modern Reset & Base --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Arial', sans-serif; background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%); color: #ffffff; min-height: 100vh; padding: 20px; }
-        .container { max-width: 800px; margin: 0 auto; }
         
-        .user-bar { background: linear-gradient(135deg, #16213e 0%, #0f3460 100%); padding: 15px 25px; border-radius: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; border: 2px solid #e94560; }
-        .user-info { font-size: 1.1em; font-weight: bold; }
-        .user-info span { color: #4ecca3; font-weight: bold; }
-        .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9em; text-decoration: none; display: inline-block; transition: all 0.3s; }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at 10% 20%, #1a1a2e 0%, #0f0f1a 90%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container { max-width: 850px; margin: 0 auto; }
+
+        /* --- Glassmorphism Utility --- */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        /* --- User Bar --- */
+        .user-bar {
+            padding: 16px 24px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #e94560;
+        }
+
+        .user-info { font-size: 1.05em; font-weight: 600; color: #ffffff; }
+        .user-info span { color: #4ecca3; font-weight: 700; }
+
+        /* --- Buttons --- */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9em;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
+        .btn:active { transform: translateY(0); }
+
         .btn-home { background: linear-gradient(135deg, #4ecca3 0%, #3fa890 100%); color: #0f0f1a; }
         .btn-logout { background: linear-gradient(135deg, #e94560 0%, #c73650 100%); color: white; }
-        
-        /* ✅ አዲስ: የ Cancel ቁልፍ ዲዛይን */
+
+        /* --- Cancel Button --- */
         .btn-cancel { 
-            padding: 8px 15px; 
+            padding: 10px 16px; 
             border: none; 
-            border-radius: 6px; 
+            border-radius: 8px; 
             cursor: pointer; 
-            font-weight: bold; 
+            font-weight: 600; 
             font-size: 0.85em; 
-            transition: all 0.3s; 
-            margin-top: 10px;
+            transition: all 0.3s ease; 
+            margin-top: 15px;
             background: linear-gradient(135deg, #e94560 0%, #c73650 100%);
             color: white;
             width: 100%;
+            box-shadow: 0 4px 12px rgba(233, 69, 96, 0.2);
         }
         .btn-cancel:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(233, 69, 96, 0.4);
+            box-shadow: 0 6px 18px rgba(233, 69, 96, 0.4);
         }
         .btn-cancel:disabled {
-            background: #333;
+            background: #2a2a2a;
             color: #666;
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+            border: 1px solid #444;
         }
 
-        header { text-align: center; padding: 30px 0; border-bottom: 3px solid #ffd700; margin-bottom: 30px; }
-        h1 { font-size: 2.2em; color: #ffd700; text-transform: uppercase; letter-spacing: 2px; }
+        /* --- Header --- */
+        header { text-align: center; padding: 40px 0 30px; margin-bottom: 20px; }
+        h1 {
+            font-size: 2.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        header p { color: #888; font-size: 1.1em; font-weight: 400; }
 
+        /* --- History List & Cards --- */
         .history-list { display: flex; flex-direction: column; gap: 15px; }
         
         .history-card {
-            background: linear-gradient(135deg, #1a1a1a 0%, #2a2a2a 100%);
-            border: 1px solid #333;
-            border-radius: 10px;
             padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            transition: opacity 0.3s;
+            gap: 12px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+        }
+        .history-card:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); 
+            border-color: rgba(255, 255, 255, 0.15); 
         }
 
-        .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; }
-        .bet-date { color: #888; font-size: 0.85em; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 12px; }
+        .bet-date { color: #888; font-size: 0.85em; font-weight: 500; }
         
-        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.8em; font-weight: bold; text-transform: uppercase; }
-        .status-open { background: rgba(255, 165, 0, 0.2); color: #ffa500; border: 1px solid #ffa500; }
-        .status-matched { background: rgba(0, 191, 255, 0.2); color: #00bfff; border: 1px solid #00bfff; }
-        .status-won { background: rgba(78, 204, 163, 0.2); color: #4ecca3; border: 1px solid #4ecca3; }
-        .status-lost { background: rgba(233, 69, 96, 0.2); color: #e94560; border: 1px solid #e94560; }
-        .status-cancelled { background: rgba(136, 136, 136, 0.2); color: #888; border: 1px solid #888; }
+        .status-badge { padding: 6px 14px; border-radius: 20px; font-size: 0.75em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        .status-open { background: rgba(255, 165, 0, 0.15); color: #ffa500; border: 1px solid rgba(255, 165, 0, 0.3); }
+        .status-matched { background: rgba(0, 191, 255, 0.15); color: #00bfff; border: 1px solid rgba(0, 191, 255, 0.3); }
+        .status-won { background: rgba(78, 204, 163, 0.15); color: #4ecca3; border: 1px solid rgba(78, 204, 163, 0.3); }
+        .status-lost { background: rgba(233, 69, 96, 0.15); color: #e94560; border: 1px solid rgba(233, 69, 96, 0.3); }
+        .status-cancelled { background: rgba(136, 136, 136, 0.15); color: #aaa; border: 1px solid rgba(136, 136, 136, 0.3); }
 
         .card-body { display: flex; justify-content: space-between; align-items: center; }
-        .bet-details { display: flex; flex-direction: column; gap: 5px; }
-        .bet-choice { font-size: 1.1em; font-weight: bold; color: #fff; }
+        .bet-details { display: flex; flex-direction: column; gap: 6px; }
+        .bet-choice { font-size: 1.1em; font-weight: 700; color: #fff; }
         .bet-choice span { color: #ffd700; }
-        .bet-amount { color: #888; font-size: 0.9em; }
+        .bet-amount { color: #888; font-size: 0.9em; font-weight: 500; }
         
         .potential-win { text-align: right; }
-        .win-label { color: #888; font-size: 0.8em; }
-        .win-amount { font-size: 1.2em; font-weight: bold; color: #4ecca3; }
+        .win-label { color: #888; font-size: 0.8em; font-weight: 500; margin-bottom: 4px; }
+        .win-amount { font-size: 1.3em; font-weight: 800; color: #4ecca3; }
 
-        .empty-state { text-align: center; padding: 40px; color: #888; font-size: 1.2em; background: #1a1a1a; border-radius: 10px; border: 1px dashed #333; }
+        .empty-state { 
+            text-align: center; 
+            padding: 50px 20px; 
+            color: #888; 
+            font-size: 1.1em; 
+            background: rgba(255, 255, 255, 0.02); 
+            border-radius: 16px; 
+            border: 1px dashed rgba(255, 255, 255, 0.1); 
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 600px) {
+            .user-bar { flex-direction: column; gap: 15px; text-align: center; }
+            .card-body { flex-direction: column; align-items: flex-start; gap: 15px; }
+            .potential-win { text-align: left; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="user-bar">
+        <div class="user-bar glass-panel">
             <div class="user-info" id="userInfo">Loading...</div>
             <div id="authButtons"></div>
         </div>
 
         <header>
             <h1>📜 Bet History</h1>
-            <p style="color: #888;">የውርርድ ታሪክህ እዚህ ይታያል</p>
+            <p>የውርርድ ታሪክህ እዚህ ይታያል</p>
         </header>
 
         <div id="history-container" class="history-list">
@@ -99,6 +173,9 @@
     </div>
 
     <script>
+        // ==========================================
+        // 🔒 SECURITY FIRST: All logic preserved exactly as before
+        // ==========================================
         const token = localStorage.getItem('token');
         const username = localStorage.getItem('username');
         let userPoints = parseInt(localStorage.getItem('balance')) || 0;
@@ -149,7 +226,7 @@
             container.innerHTML = '';
             bets.forEach(bet => {
                 const card = document.createElement('div');
-                card.className = 'history-card';
+                card.className = 'history-card glass-panel';
                 card.id = `bet-card-${bet._id}`;
 
                 // Status mapping
@@ -171,7 +248,7 @@
                 } else if (bet.status === 'cancelled') {
                     statusClass = 'status-cancelled';
                     statusText = 'Cancelled (ተሰርዟል)';
-                    winDisplay = `<div class="win-label">Refunded</div><div class="win-amount" style="color: #888;">${bet.amount} pts</div>`;
+                    winDisplay = `<div class="win-label">Refunded</div><div class="win-amount" style="color: #aaa;">${bet.amount} pts</div>`;
                 }
 
                 const date = new Date(bet.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -240,6 +317,7 @@
                     btnElement.innerText = '✅ Cancelled & Refunded';
                     btnElement.style.background = '#4ecca3';
                     btnElement.style.color = '#000';
+                    btnElement.style.boxShadow = 'none';
                     
                     // Remove card after short delay
                     setTimeout(() => {
