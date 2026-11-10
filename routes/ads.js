@@ -108,8 +108,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
 });
 
 // ⚠️ TEMPORARY: One-click test ad insertion (Remove after use)
-// ይህ መስመር ሳይቱ ላይ ከገባህ በኋላ አንድ ጊዜ ብቻ በመክፈት ማስታወቂያውን ወደ ዳታቤዝ ያስገባል።
-router.get('/seed-test', authenticateToken, async (req, res) => {
+// ለስልክ ሙከራ እንዲመች የ Token ማረጋገጫው ተነስቷል። ከተሳካ በኋላ ይህንን መስመር እናስወግዳለን።
+router.get('/seed-test', async (req, res) => {
   try {
     // ማስታወቂያው ቀድሞ ካለ አያስገባም (Duplicate ለመከላከል)
     const existingAd = await Ad.findOne({ title: "Test Ad from Mobile" });
@@ -117,13 +117,12 @@ router.get('/seed-test', authenticateToken, async (req, res) => {
       return res.json({ message: "✅ Test ad already exists!", ad: existingAd });
     }
     
-    // አዲስ ማስታወቂያ ይፈጥራል
+    // አዲስ ማስታወቂያ ይፈጥራል (addedBy ለጊዜው ተተውቷል)
     const newAd = new Ad({
       title: "Test Ad from Mobile",
       imageUrl: "https://via.placeholder.com/728x90.png?text=Fight+P2P+Test+Ad",
       targetUrl: "https://example.com",
-      isActive: true,
-      addedBy: req.userId
+      isActive: true
     });
     
     await newAd.save();
