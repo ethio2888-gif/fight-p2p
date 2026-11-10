@@ -3,89 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fight P2P - መግቢያ እና ምዝገባ</title>
+    <title>Fight P2P - Premium Login & Register</title>
     <style>
+        /* --- Modern Reset & Base --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a2e;
-            color: #ffffff;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: radial-gradient(circle at 10% 20%, #1a1a2e 0%, #0f0f1a 90%);
+            color: #e0e0e0;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            margin: 0;
             padding: 20px;
         }
+
+        /* --- Glassmorphism Container --- */
         .container {
-            background-color: #16213e;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
+            padding: 40px 30px;
+            transition: all 0.3s ease;
         }
+
         h2 {
             text-align: center;
-            color: #e94560;
-            margin-bottom: 20px;
+            font-size: 1.8em;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 30px;
+            letter-spacing: 0.5px;
         }
+
+        /* --- Modern Inputs --- */
         input {
             width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            border: 1px solid #0f3460;
-            border-radius: 6px;
-            background-color: #0f3460;
+            padding: 14px 16px;
+            margin: 12px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.2);
             color: #ffffff;
-            box-sizing: border-box;
-            font-size: 16px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            outline: none;
         }
+
         input::placeholder {
-            color: #a0a0a0;
+            color: #666;
         }
+
+        input:focus {
+            border-color: #ffd700;
+            box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.15);
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* --- Modern Buttons --- */
         button {
             width: 100%;
-            padding: 12px;
-            background-color: #e94560;
+            padding: 14px;
+            margin-top: 20px;
+            background: linear-gradient(135deg, #e94560 0%, #c73650 100%);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 10px;
             cursor: pointer;
             font-size: 16px;
-            font-weight: bold;
-            margin-top: 15px;
-            transition: background 0.3s;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
         }
+
         button:hover {
-            background-color: #c73650;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(233, 69, 96, 0.4);
         }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        /* --- Toggle Link --- */
         .toggle-link {
             text-align: center;
-            margin-top: 15px;
+            margin-top: 25px;
             color: #4ecca3;
             cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .toggle-link:hover {
+            color: #3fa890;
             text-decoration: underline;
         }
+
+        /* --- Result Messages --- */
         .result {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 6px;
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 8px;
             text-align: center;
             font-size: 14px;
+            font-weight: 600;
             display: none;
+            animation: fadeIn 0.3s ease;
         }
+
         .success {
-            background-color: rgba(78, 204, 163, 0.2);
+            background-color: rgba(78, 204, 163, 0.15);
             color: #4ecca3;
-            border: 1px solid #4ecca3;
+            border: 1px solid rgba(78, 204, 163, 0.3);
         }
+
         .error {
-            background-color: rgba(233, 69, 96, 0.2);
+            background-color: rgba(233, 69, 96, 0.15);
             color: #e94560;
-            border: 1px solid #e94560;
+            border: 1px solid rgba(233, 69, 96, 0.3);
         }
+
         .hidden {
             display: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- Responsive --- */
+        @media (max-width: 480px) {
+            .container {
+                padding: 30px 20px;
+            }
+            h2 {
+                font-size: 1.5em;
+            }
         }
     </style>
 </head>
@@ -94,27 +159,30 @@
     <div class="container">
         <!-- የምዝገባ ክፍል -->
         <div id="registerSection">
-            <h2>አዲስ መለያ ይጠሩ</h2>
-            <input type="text" id="regUsername" placeholder="የተጠቃ ስም (Username)">
-            <input type="email" id="regEmail" placeholder="ኢሜይል (Email)">
-            <input type="password" id="regPassword" placeholder="የይለፍ ል (Password)">
+            <h2>🥊 አዲስ መለያ ይፍጠሩ</h2>
+            <input type="text" id="regUsername" placeholder="የተጠቃሚ ስም (Username)" autocomplete="username">
+            <input type="email" id="regEmail" placeholder="ኢሜይል (Email)" autocomplete="email">
+            <input type="password" id="regPassword" placeholder="የይለፍ ቃል (Password)" autocomplete="new-password">
             <button onclick="register()">መዝገብ</button>
             <p class="toggle-link" onclick="showLogin()">ድሮ መለያ አለዎት? ይግቡ</p>
             <div id="regResult" class="result"></div>
         </div>
 
-        <!-- የመግያ ክፍል -->
+        <!-- የመግቢያ ክፍል -->
         <div id="loginSection" class="hidden">
-            <h2>ወደ መለያዎ ይግቡ</h2>
-            <input type="text" id="loginUsername" placeholder="የተጠቃሚ ስም (Username)">
-            <input type="password" id="loginPassword" placeholder="የይለፍ ቃል (Password)">
-            <button onclick="login()">መባት</button>
+            <h2>👋 ወደ መለያዎ ይግቡ</h2>
+            <input type="text" id="loginUsername" placeholder="የተጠቃሚ ስም (Username)" autocomplete="username">
+            <input type="password" id="loginPassword" placeholder="የይለፍ ቃል (Password)" autocomplete="current-password">
+            <button onclick="login()">መግባት</button>
             <p class="toggle-link" onclick="showRegister()">መለያ የለዎትም? ይመዝገቡ</p>
             <div id="loginResult" class="result"></div>
         </div>
     </div>
 
     <script>
+        // ==========================================
+        // 🔒 SECURITY FIRST: All logic preserved exactly as before
+        // ==========================================
         const API_URL = 'https://fight-p2p.onrender.com/api/auth';
 
         function showResult(elementId, message, isError) {
@@ -130,7 +198,7 @@
             const password = document.getElementById('regPassword').value;
             
             if (!username || !email || !password) {
-                return showResult('regResult', 'እባክዎ ሁሉንም መስኮች ይሉ!', true);
+                return showResult('regResult', '❌ እባክዎ ሁሉንም መስኮች ይሙሉ!', true);
             }
 
             try {
@@ -142,13 +210,13 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    showResult('regResult', '✅ በተሳካ ሁኔታ ተመዝግበል! አሁን ይግቡ።', false);
+                    showResult('regResult', '✅ በተሳካ ሁኔታ ተመዝግበዋል! አሁን ይግቡ።', false);
                     setTimeout(showLogin, 1500);
                 } else {
-                    showResult('regResult', '❌ ' + (data.message || 'ስህተት ተፈሯል'), true);
+                    showResult('regResult', '❌ ' + (data.message || 'ስህተት ተፈጥሯል'), true);
                 }
             } catch (error) {
-                showResult('regResult', '❌ ከርቨር ጋር መገናኘት አልተሳካም።', true);
+                showResult('regResult', '❌ ከሰርቨር ጋር መገናኘት አልተሳካም።', true);
             }
         }
 
@@ -157,7 +225,7 @@
             const password = document.getElementById('loginPassword').value;
             
             if (!username || !password) {
-                return showResult('loginResult', 'እባክዎ ም እና ፓስዎርድ ያስገቡ!', true);
+                return showResult('loginResult', '❌ እባክዎ ስም እና ፓስዎርድ ያስገቡ!', true);
             }
 
             try {
@@ -176,16 +244,15 @@
                     
                     showResult('loginResult', `✅ በተሳካ ሁኔታ ገብተዋል! እየተመላለስን...`, false);
                     
-                    // ========== አዲስ የተጨመረ: ቀጥታ ወደ ዋናው ገ መሄድ ==========
+                    // ቀጥታ ወደ ዋናው ገጽ መሄድ
                     setTimeout(() => {
-                        window.location.href = '/'; // ወደ ዋናው ገጽ (index.html)
+                        window.location.href = '/'; 
                     }, 1500);
-                    // ===========================================================
                 } else {
                     showResult('loginResult', '❌ ' + (data.message || 'ስህተት ተፈጥሯል'), true);
                 }
             } catch (error) {
-                showResult('loginResult', '❌ ከሰርቨር ጋር መገናኘት አልተሳም።', true);
+                showResult('loginResult', '❌ ከሰርቨር ጋር መገናኘት አልተሳካም።', true);
             }
         }
 
