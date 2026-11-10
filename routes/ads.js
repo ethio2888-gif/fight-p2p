@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key_change_this_later';
 
-// Middleware: JWT Token ማረጋገጫ (ለ Admin ብቻ)
+// Middleware: JWT Token ማረጋገጫ
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -23,6 +23,16 @@ const authenticateToken = (req, res, next) => {
   });
 };
 
+// 🔒 SECURITY FIRST: የ URL ማረጋገጫ ፈንክሽን (XSS/Open Redirect መከላከያ)
+const isValidUrl = (string) => {
+  try {
+    const url = new URL(string);
+    return url.protocol === 'http:' || url.protocol === 'https:';
+  } catch (_) {
+    return false;
+  }
+};
+
 // 1. PUBLIC: Active ማስታወቂያዎችን ማግኘት (Secure: የተወሰኑ መስኮችን ብቻ ይመልሳል)
 router.get('/', async (req, res) => {
   try {
@@ -33,7 +43,7 @@ router.get('/', async (req, res) => {
         { endDate: { $exists: false } },
         { endDate: { $gte: now } }
       ]
-    }).select('title imageUrl targetUrl'); // ✅ Security: ሚስጥራዊ መረጃዎችን አያካትትም
+    }).select('title imageUrl targetUrl'); // ✅ Security: ሚስጥራዊ መረጃዎችን (addedBy, _id) አያካትትም
     
     res.json(ads);
   } catch (error) {
@@ -41,7 +51,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 2. ADMIN ONLY: አዲስ ማስታወቂያ መጨመር (Secure: Token ያስፈልጋል)
+// 2. ADMIN ONLY: አዲስ ማስታወቂያ መጨመር (Secure: Token እና URL Validation ያስፈልጋል)
 router.post('/', authenticateToken, async (req, res) => {
   try {
     const { title, imageUrl, targetUrl, endDate } = req.body;
@@ -49,6 +59,11 @@ router.post('/', authenticateToken, async (req, res) => {
     // ✅ Security: Input Validation
     if (!title || !imageUrl || !targetUrl) {
       return res.status(400).json({ message: 'ርዕስ፣ የምስል ሊንክ እና የሚሄድበት ሊንክ ያስፈልጋሉ' });
+    }
+
+    // 🔒 SECURITY FIRST: ሊንኮቹ ትክክለኛ HTTP/HTTPS መሆናቸውን ማረጋገጥ
+    if (!isValidUrl(imageUrl) || !isValidUrl(targetUrl)) {
+      return res.status(400).json({ message: 'የምስል ሊንክ እና የሚሄድበት ሊንክ ትክክለኛ የ HTTP/HTTPS ሊንክ መሆን አለባቸው' });
     }
 
     const newAd = new Ad({
@@ -71,11 +86,16 @@ router.put('/:id', authenticateToken, async (req, res) => {
   try {
     const { isActive } = req.body;
     
+    // ✅ Security: isActive ብቻ boolean መሆኑን ማረጋገጥ
+    if (typeof isActive !== 'boolean') {
+      return res.status(400).json({ message: 'isActive የ boolean ዋጋ መሆን አለበት' });
+    }
+
     const ad = await Ad.findByIdAndUpdate(
       req.params.id, 
       { isActive }, 
       { new: true }
-    );
+    ).select('title imageUrl targetUrl isActive'); // ✅ Security: ሚስጥራዊ መረጃ አለመመለስ
     
     if (!ad) {
       return res.status(404).json({ message: 'ማስታወቂያው አልተገኘም' });
