@@ -4,12 +4,19 @@ const adSchema = new mongoose.Schema({
   title: { 
     type: String, 
     required: true, 
-    trim: true 
+    trim: true,
+    maxlength: 100 // 🔒 Security First: የርዕስ ርዝመትን ይገድባል
   },
-  imageUrl: { 
+  type: {
+    type: String,
+    enum: ['image', 'video'], // ✅ አዲስ: ምስል ወይም ቪዲዮ መሆኑን ይለያል
+    default: 'image',
+    required: true
+  },
+  mediaUrl: { 
     type: String, 
     required: true, 
-    trim: true 
+    trim: true // ✅ አዲስ: የምስል ወይም የቪዲዮ ሊንክ
   },
   targetUrl: { 
     type: String, 
