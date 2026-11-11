@@ -130,7 +130,6 @@
         .status-upcoming { color: #4ecca3; font-weight: 700; font-size: 0.8em; }
         .status-live { color: #e94560; font-weight: 800; animation: pulse 1.5s infinite; font-size: 0.8em; }
 
-        /* --- GUARANTEED HORIZONTAL LAYOUT --- */
         .matchup-container {
             display: flex !important;
             flex-direction: row !important;
@@ -230,7 +229,6 @@
 
         footer { text-align: center; padding: 30px 20px; border-top: 1px solid rgba(255, 255, 255, 0.05); margin-top: 30px; color: #555; font-size: 0.8em; }
 
-        /* Mobile adjustments */
         @media (max-width: 600px) {
             h1 { font-size: 2em; }
             .fighter-photo { font-size: 2.5em; }
@@ -341,21 +339,26 @@
             } catch (error) { console.error('Bonus error:', error); }
         }
 
+        // ✅ የተስተካከለው loadFights Function
         async function loadFights() {
+            const container = document.getElementById('fights-container');
+            container.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">⏳ Loading fights from database...</p>';
             try {
                 const response = await fetch('/api/fights');
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}`);
+                }
                 const fights = await response.json();
-                displayFights(fights);
+                
+                if (Array.isArray(fights) && fights.length > 0) {
+                    displayFights(fights);
+                } else {
+                    container.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">No upcoming fights at the moment. Check back soon!</p>';
+                }
             } catch (error) {
-                displayFights(getSampleFights());
+                console.error('Error loading fights:', error);
+                container.innerHTML = `<p style="text-align:center; color:#e94560; padding:20px;">⚠️ Failed to load fights. (Error: ${error.message})<br><small>Check console (F12) for details.</small></p>`;
             }
-        }
-
-        function getSampleFights() {
-            return [
-                { id: 1, fighter1: { name: 'Ethiopian Lion', record: '15-2-0', photo: '🦁' }, fighter2: { name: 'African Thunder', record: '12-3-1', photo: '⚡' }, date: '2026-11-15', status: 'upcoming', bets: [] },
-                { id: 2, fighter1: { name: 'Addis Warrior', record: '10-1-0', photo: '🛡️' }, fighter2: { name: 'Nile Storm', record: '8-4-2', photo: '🌊' }, date: '2026-11-20', status: 'upcoming', bets: [] }
-            ];
         }
 
         function displayFights(fights) {
@@ -429,7 +432,7 @@
                         <button class="bet-btn bet-btn-fighter2">Bet on ${fight.fighter2.name}</button>
                     </div>
                     <div class="message"></div>
-                    ${fight.bets.length > 0 ? `
+                    ${fight.bets && fight.bets.length > 0 ? `
                         <div class="current-bets">
                             <strong style="color:#888; font-size:0.75em; display:block; margin-bottom:8px; text-transform:uppercase;">Current Bets:</strong>
                             ${fight.bets.map(bet => `<div class="bet-item"><span>${bet.fighter}</span><span style="color:#ffd700; font-weight:700;">${bet.amount} pts</span></div>`).join('')}
