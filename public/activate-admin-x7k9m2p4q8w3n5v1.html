@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Activation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: radial-gradient(circle at 50% 0%, #1e1e30 0%, #0a0a12 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+        }
+        h1 { font-size: 1.8em; margin-bottom: 20px; color: #ffd700; }
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: 600;
+        }
+        .success { background: rgba(78, 204, 163, 0.15); color: #4ecca3; border: 1px solid rgba(78, 204, 163, 0.3); }
+        .error { background: rgba(233, 69, 96, 0.15); color: #e94560; border: 1px solid rgba(233, 69, 96, 0.3); }
+        .info { background: rgba(0, 191, 255, 0.15); color: #00bfff; border: 1px solid rgba(0, 191, 255, 0.3); }
+        .btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #4ecca3 0%, #3fa890 100%);
+            color: #0a0a12;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Admin Activation</h1>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('token');
+        const resultDiv = document.getElementById('result');
+
+        if (!token) {
+            resultDiv.innerHTML = `
+                <div class="message error">
+                    ❌ መጀመሪያ ይግቡ!
+                </div>
+                <a href="/" class="btn">Login</a>
+            `;
+        } else {
+            resultDiv.innerHTML = '<div class="message info">⏳ እየሰራ ነው...</div>';
+            
+            const secretCode = 'FightP2P_Secure_Admin_Activation_2026_XYZ789_ABC123_DEF456';
+            
+            fetch(`/api/x7k9m2p4q8w3n5v1z8b6d4f2h9j1k3m5/x7k9m2p4q8w3n5v1z8b6d4f2h9j1k3m5/activate/${secretCode}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.message.includes('🎉') || data.message.includes('✅')) {
+                    resultDiv.innerHTML = `<div class="message success">${data.message}</div>`;
+                } else {
+                    resultDiv.innerHTML = `<div class="message error">${data.message}</div>`;
+                }
+            })
+            .catch(err => {
+                resultDiv.innerHTML = `<div class="message error">❌ Network error</div>`;
+            });
+        }
+    </script>
+</body>
+</html>
