@@ -56,6 +56,28 @@
             outline: none;
             border-color: #ffd700;
         }
+        
+        /* File Input Styling */
+        .form-group input[type="file"] {
+            padding: 10px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .form-group input[type="file"]::file-selector-button {
+            background: rgba(255, 215, 0, 0.15);
+            color: #ffd700;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 6px;
+            padding: 6px 12px;
+            margin-right: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .form-group input[type="file"]::file-selector-button:hover {
+            background: rgba(255, 215, 0, 0.25);
+        }
+
         .row { display: flex; gap: 15px; }
         .col { flex: 1; }
         
@@ -75,6 +97,12 @@
             color: #0a0a12;
         }
         .btn-primary:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .btn-primary:disabled {
+            background: #1a1a25;
+            color: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
         .btn-danger {
             background: rgba(233, 69, 96, 0.2);
             color: #e94560;
@@ -110,6 +138,12 @@
         .message.success { background: rgba(78, 204, 163, 0.15); color: #4ecca3; border: 1px solid rgba(78, 204, 163, 0.3); }
         .message.error { background: rgba(233, 69, 96, 0.15); color: #e94560; border: 1px solid rgba(233, 69, 96, 0.3); }
 
+        .upload-status {
+            font-size: 0.8em;
+            margin-top: 5px;
+            min-height: 1.2em;
+        }
+
         @media (max-width: 600px) {
             .row { flex-direction: column; gap: 10px; }
         }
@@ -137,8 +171,9 @@
                             <input type="text" id="f1Record" placeholder="e.g., 15-2-0">
                         </div>
                         <div class="form-group">
-                            <label>Fighter 1 Photo (URL or Emoji)</label>
-                            <input type="text" id="f1Photo" placeholder="🦁 or https://...">
+                            <label>Fighter 1 Photo (Upload Image)</label>
+                            <input type="file" id="f1PhotoFile" accept="image/*">
+                            <p id="upload1Status" class="upload-status"></p>
                         </div>
                     </div>
                     <div class="col">
@@ -151,8 +186,9 @@
                             <input type="text" id="f2Record" placeholder="e.g., 12-3-1">
                         </div>
                         <div class="form-group">
-                            <label>Fighter 2 Photo (URL or Emoji)</label>
-                            <input type="text" id="f2Photo" placeholder="⚡ or https://...">
+                            <label>Fighter 2 Photo (Upload Image)</label>
+                            <input type="file" id="f2PhotoFile" accept="image/*">
+                            <p id="upload2Status" class="upload-status"></p>
                         </div>
                     </div>
                 </div>
@@ -205,6 +241,48 @@
             setTimeout(() => { messageBox.style.display = 'none'; }, 4000);
         }
 
+        // 🔒 Secure Image Upload Function
+        async function uploadImage(fileInputId, statusId) {
+            const fileInput = document.getElementById(fileInputId);
+            const statusEl = document.getElementById(statusId);
+            
+            if (!fileInput.files || fileInput.files.length === 0) {
+                return null; // No file selected
+            }
+
+            const file = fileInput.files[0];
+            const formData = new FormData();
+            formData.append('image', file);
+
+            statusEl.innerText = '⏳ Uploading image...';
+            statusEl.style.color = '#ffd700';
+
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    statusEl.innerText = '✅ Uploaded successfully!';
+                    statusEl.style.color = '#4ecca3';
+                    return data.url;
+                } else {
+                    statusEl.innerText = '❌ Upload failed: ' + data.message;
+                    statusEl.style.color = '#e94560';
+                    return null;
+                }
+            } catch (error) {
+                statusEl.innerText = '❌ Network error during upload';
+                statusEl.style.color = '#e94560';
+                return null;
+            }
+        }
+
         // Load existing fights
         async function loadFights() {
             try {
@@ -239,20 +317,30 @@
             `).join('');
         }
 
-        // Add new fight
+        // Add new fight with Image Upload
         document.getElementById('addFightForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalBtnText = submitBtn.innerText;
+            submitBtn.innerText = '⏳ Processing...';
+            submitBtn.disabled = true;
+
+            // 1. Upload images first (if selected)
+            const f1PhotoUrl = await uploadImage('f1PhotoFile', 'upload1Status');
+            const f2PhotoUrl = await uploadImage('f2PhotoFile', 'upload2Status');
+
+            // 2. Prepare fight data (fallback to default emoji 🥊 if no image uploaded)
             const fightData = {
                 fighter1: {
                     name: document.getElementById('f1Name').value,
                     record: document.getElementById('f1Record').value || '0-0-0',
-                    photo: document.getElementById('f1Photo').value || '🥊'
+                    photo: f1PhotoUrl || '🥊'
                 },
                 fighter2: {
                     name: document.getElementById('f2Name').value,
                     record: document.getElementById('f2Record').value || '0-0-0',
-                    photo: document.getElementById('f2Photo').value || '🥊'
+                    photo: f2PhotoUrl || '🥊'
                 },
                 date: document.getElementById('fightDate').value,
                 status: document.getElementById('fightStatus').value
@@ -272,12 +360,17 @@
                 if (res.ok) {
                     showMessage('✅ Fight added successfully!', 'success');
                     document.getElementById('addFightForm').reset();
+                    document.getElementById('upload1Status').innerText = '';
+                    document.getElementById('upload2Status').innerText = '';
                     loadFights(); // Refresh list
                 } else {
                     showMessage('❌ ' + (data.message || 'Failed to add fight'), 'error');
                 }
             } catch (error) {
                 showMessage('❌ Network error.', 'error');
+            } finally {
+                submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
             }
         });
 
