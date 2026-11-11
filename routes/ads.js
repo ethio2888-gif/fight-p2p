@@ -13,60 +13,64 @@ const isValidUrl = (string) => {
   }
 };
 
-// 1. PUBLIC: Active ማስታወቂያዎችን ማግኘት (Secure: የተወሰኑ መስኮችን ብቻ ይመልሳል)
+// 1. PUBLIC: ሁሉንም Active ማስታወቂያዎችን ማግኘት (SIMPLIFIED & COMPATIBLE)
 router.get('/', async (req, res) => {
   try {
-    const now = new Date();
-    const ads = await Ad.find({ 
-      isActive: true,
-      $or: [
-        { endDate: { $exists: false } },
-        { endDate: { $gte: now } }
-      ]
-    }).select('title type mediaUrl targetUrl'); // ✅ Security: ሚስጥራዊ መረጃዎችን (addedBy, _id) አያካትትም
+    // ለ debugging ሁሉንም ማስታወቂያዎች እናመጣለን (isActive: true ብቻ)
+    // mediaUrl ወይም imageUrl ሁለቱንም እንዲመልስ እናደርጋለን
+    const ads = await Ad.find({ isActive: true })
+      .select('title type mediaUrl imageUrl targetUrl isActive')
+      .sort({ createdAt: -1 });
     
     res.json(ads);
   } catch (error) {
+    console.error('Ad GET Error:', error);
     res.status(500).json({ message: 'የሰርቨር ስህተት', error: error.message });
   }
 });
 
-// 2. ADMIN ONLY: አዲስ ማስታወቂያ መጨመር (Secure: requireAdmin እና URL Validation)
+// 2. ADMIN ONLY: አዲስ ማስታወቂያ መጨመር
 router.post('/', requireAdmin, async (req, res) => {
   try {
-    const { title, type, mediaUrl, targetUrl, endDate } = req.body;
+    const { title, type, mediaUrl, imageUrl, targetUrl, endDate } = req.body;
     
-    // ✅ Security: Input Validation
-    if (!title || !type || !mediaUrl || !targetUrl) {
-      return res.status(400).json({ message: 'ርዕስ፣ ዓይነት፣ ሚዲያ ሊንክ እና የሚሄድበት ሊንክ ያስፈልጋሉ' });
+    // ✅ Security: Input Validation (mediaUrl ወይም imageUrl አንዱ መኖር አለበት)
+    const finalMediaUrl = mediaUrl || imageUrl;
+    
+    if (!title || !finalMediaUrl || !targetUrl) {
+      return res.status(400).json({ message: 'ርዕስ፣ ሚዲያ ሊንክ እና የሚሄድበት ሊንክ ያስፈልጋሉ' });
     }
 
-    if (type !== 'image' && type !== 'video') {
+    const finalType = type || 'image';
+    if (finalType !== 'image' && finalType !== 'video') {
       return res.status(400).json({ message: 'ዓይነቱ image ወይም video ብቻ መሆን አለበት' });
     }
 
     // 🔒 SECURITY FIRST: ሊንኮቹ ትክክለኛ HTTP/HTTPS መሆናቸውን ማረጋገጥ
-    if (!isValidUrl(mediaUrl) || !isValidUrl(targetUrl)) {
+    if (!isValidUrl(finalMediaUrl) || !isValidUrl(targetUrl)) {
       return res.status(400).json({ message: 'ሚዲያ ሊንክ እና የሚሄድበት ሊንክ ትክክለኛ የ HTTP/HTTPS ሊንክ መሆን አለባቸው' });
     }
 
     const newAd = new Ad({
       title,
-      type,
-      mediaUrl,
+      type: finalType,
+      mediaUrl: finalMediaUrl,
+      imageUrl: finalMediaUrl, // ለ backward compatibility
       targetUrl,
       endDate: endDate || null,
+      isActive: true,
       addedBy: req.userId
     });
 
     await newAd.save();
     res.status(201).json({ message: 'ማስታወቂያ በተሳካ ሁኔታ ተጨምሯል', ad: newAd });
   } catch (error) {
+    console.error('Ad POST Error:', error);
     res.status(500).json({ message: 'የሰርቨር ስህተት', error: error.message });
   }
 });
 
-// 3. ADMIN ONLY: ማስታወቂያን ማስወገድ (Delete) - ለዳሽቦርዱ ያስፈልጋል
+// 3. ADMIN ONLY: ማስታወቂያን ማስወገድ (Delete)
 router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     const ad = await Ad.findByIdAndDelete(req.params.id);
@@ -79,7 +83,7 @@ router.delete('/:id', requireAdmin, async (req, res) => {
   }
 });
 
-// 4. ADMIN ONLY: ማስታወቂያን ማብራት/ማጥፋት (Optional, ለወደፊት አገልግሎት)
+// 4. ADMIN ONLY: ማስታወቂያን ማብራት/ማጥፋት
 router.put('/:id', requireAdmin, async (req, res) => {
   try {
     const { isActive } = req.body;
@@ -92,7 +96,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
       req.params.id, 
       { isActive }, 
       { new: true }
-    ).select('title type mediaUrl targetUrl isActive');
+    ).select('title type mediaUrl imageUrl targetUrl isActive');
     
     if (!ad) {
       return res.status(404).json({ message: 'ማስታወቂያው አልተገኘም' });
