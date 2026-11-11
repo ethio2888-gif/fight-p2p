@@ -1,27 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Ad = require('../models/Ad');
-const jwt = require('jsonwebtoken');
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key_change_this_later';
-
-// Middleware: JWT Token ረጋገጫ
-const authenticateToken = (req, res, next) => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
-  
-  if (!token) {
-    return res.status(401).json({ message: 'Token የለም እባክዎ ግቡ' });
-  }
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) {
-      return res.status(403).json({ message: 'Invalid token' });
-    }
-    req.userId = user.userId;
-    next();
-  });
-};
+const { requireAdmin } = require('../middleware/adminMiddleware');
 
 // 🔒 SECURITY FIRST: የ URL ማረጋገጫ ፈንክሽን (XSS/Open Redirect መከላከያ)
 const isValidUrl = (string) => {
@@ -33,7 +13,7 @@ const isValidUrl = (string) => {
   }
 };
 
-// 1. PUBLIC: Active ስታወቂያዎችን ማግኘት (Secure: የተወሰኑ መስኮችን ብ ይመልሳል)
+// 1. PUBLIC: Active ማስታወቂያዎችን ማግኘት (Secure: የተወሰኑ መስኮችን ብቻ ይመልሳል)
 router.get('/', async (req, res) => {
   try {
     const now = new Date();
@@ -43,50 +23,67 @@ router.get('/', async (req, res) => {
         { endDate: { $exists: false } },
         { endDate: { $gte: now } }
       ]
-    }).select('title imageUrl targetUrl'); // ✅ Security: ሚስጥራዊ መረጃዎችን (addedBy, _id) አያትትም
+    }).select('title type mediaUrl targetUrl'); // ✅ Security: ሚስጥራዊ መረጃዎችን (addedBy, _id) አያካትትም
     
     res.json(ads);
   } catch (error) {
-    res.status(500).json({ message: 'የርቨር ስህተት', error: error.message });
+    res.status(500).json({ message: 'የሰርቨር ስህተት', error: error.message });
   }
 });
 
-// 2. ADMIN ONLY: አዲስ ማስታወቂያ መጨመር (Secure: Token እና URL Validation ያስልጋል)
-router.post('/', authenticateToken, async (req, res) => {
+// 2. ADMIN ONLY: አዲስ ማስታወቂያ መጨመር (Secure: requireAdmin እና URL Validation)
+router.post('/', requireAdmin, async (req, res) => {
   try {
-    const { title, imageUrl, targetUrl, endDate } = req.body;
+    const { title, type, mediaUrl, targetUrl, endDate } = req.body;
     
     // ✅ Security: Input Validation
-    if (!title || !imageUrl || !targetUrl) {
-      return res.status(400).json({ message: 'ርዕስ፣ የምስል ሊንክ እና የሄድበት ሊንክ ያስፈልጋሉ' });
+    if (!title || !type || !mediaUrl || !targetUrl) {
+      return res.status(400).json({ message: 'ርዕስ፣ ዓይነት፣ ሚዲያ ሊንክ እና የሚሄድበት ሊንክ ያስፈልጋሉ' });
     }
 
-    // 🔒 SECURITY FIRST: ሊንኮቹ ትክክለኛ HTTP/HTTPS መሆናቸውን ማረገጥ
-    if (!isValidUrl(imageUrl) || !isValidUrl(targetUrl)) {
-      return res.status(400).json({ message: 'የምስል ሊንክ እና የሚሄድበት ሊንክ ትክክለኛ የ HTTP/HTTPS ንክ መሆን አለቸው' });
+    if (type !== 'image' && type !== 'video') {
+      return res.status(400).json({ message: 'ዓይነቱ image ወይም video ብቻ መሆን አለበት' });
+    }
+
+    // 🔒 SECURITY FIRST: ሊንኮቹ ትክክለኛ HTTP/HTTPS መሆናቸውን ማረጋገጥ
+    if (!isValidUrl(mediaUrl) || !isValidUrl(targetUrl)) {
+      return res.status(400).json({ message: 'ሚዲያ ሊንክ እና የሚሄድበት ሊንክ ትክክለኛ የ HTTP/HTTPS ሊንክ መሆን አለባቸው' });
     }
 
     const newAd = new Ad({
       title,
-      imageUrl,
+      type,
+      mediaUrl,
       targetUrl,
       endDate: endDate || null,
       addedBy: req.userId
     });
 
     await newAd.save();
-    res.status(201).json({ message: 'ማስታወቂያ በተሳካ ሁኔ ተጨምሯል', ad: newAd });
+    res.status(201).json({ message: 'ማስታወቂያ በተሳካ ሁኔታ ተጨምሯል', ad: newAd });
   } catch (error) {
-    res.status(500).json({ message: 'የሰርቨር ህተት', error: error.message });
+    res.status(500).json({ message: 'የሰርቨር ስህተት', error: error.message });
   }
 });
 
-// 3. ADMIN ONLY: ማስታወቂያን ማብራት/ማጥፋት (Secure: Token ያስፈልጋል)
-router.put('/:id', authenticateToken, async (req, res) => {
+// 3. ADMIN ONLY: ማስታወቂያን ማስወገድ (Delete) - ለዳሽቦርዱ ያስፈልጋል
+router.delete('/:id', requireAdmin, async (req, res) => {
+  try {
+    const ad = await Ad.findByIdAndDelete(req.params.id);
+    if (!ad) {
+      return res.status(404).json({ message: 'ማስታወቂያው አልተገኘም' });
+    }
+    res.json({ message: 'ማስታወቂያ በተሳካ ሁኔታ ተሰርዟል' });
+  } catch (error) {
+    res.status(500).json({ message: 'የሰርቨር ስህተት', error: error.message });
+  }
+});
+
+// 4. ADMIN ONLY: ማስታወቂያን ማብራት/ማጥፋት (Optional, ለወደፊት አገልግሎት)
+router.put('/:id', requireAdmin, async (req, res) => {
   try {
     const { isActive } = req.body;
     
-    // ✅ Security: isActive ብ boolean መሆኑን ረጋገጥ
     if (typeof isActive !== 'boolean') {
       return res.status(400).json({ message: 'isActive የ boolean ዋጋ መሆን አለበት' });
     }
@@ -95,10 +92,10 @@ router.put('/:id', authenticateToken, async (req, res) => {
       req.params.id, 
       { isActive }, 
       { new: true }
-    ).select('title imageUrl targetUrl isActive'); // ✅ Security: ሚስጥራዊ መረጃ አለመመለስ
+    ).select('title type mediaUrl targetUrl isActive');
     
     if (!ad) {
-      return res.status(404).json({ message: 'ማስታወያው አልተገኘም' });
+      return res.status(404).json({ message: 'ማስታወቂያው አልተገኘም' });
     }
     
     res.json({ message: 'የማስታወቂያው ሁኔታ ተቀይሯል', ad });
