@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const Fight = require('../models/Fight');
+const Bet = require('../models/Bet'); // ለውርርድ ክፍያ ተጨምሯል
+const User = require('../models/User'); // ለተጠቃሚ ሂሳብ ማሻሻል ተጨምሯል
 const { requireAdmin } = require('../middleware/adminMiddleware');
 
 // 🔒 SECURITY FIRST: የግቤት መረጃ ማረጋገጫ (Input Validation)
@@ -96,6 +98,64 @@ router.delete('/:id', requireAdmin, async (req, res) => {
     }
     res.json({ message: 'ፋይት በተሳካ ሁኔታ ተሰርዟል' });
   } catch (error) {
+    res.status(500).json({ message: 'የሰርቨር ስህተት', error: error.message });
+  }
+});
+
+// 5. ADMIN ONLY: አሸናፊ መምረጥ እና ነጥብ ማከፋፈል (Declare Winner & Payout)
+router.post('/:id/declare-winner', requireAdmin, async (req, res) => {
+  try {
+    const { winner, winnerName, payout } = req.body; // winner: 'fighter1' or 'fighter2'
+    const fightId = req.params.id;
+
+    const fight = await Fight.findById(fightId);
+    if (!fight) {
+      return res.status(404).json({ message: 'ፋይት አልተገኘም' });
+    }
+
+    if (fight.status === 'finished') {
+      return res.status(400).json({ message: 'ይህ ፋይት አስቀድሞ ተጠናቋል' });
+    }
+
+    // ✅ Update fight status and winner
+    fight.status = 'finished';
+    fight.winner = winner; 
+    await fight.save();
+
+    // ✅ Find all winning bets for this fight
+    const winningBets = await Bet.find({ fightId, fighterChoice: winner });
+
+    let processedCount = 0;
+    for (const bet of winningBets) {
+      const user = await User.findById(bet.userId);
+      if (user) {
+        // Calculate winnings (bet amount * payout multiplier)
+        const winnings = bet.amount * payout;
+        user.balance = (user.balance || 0) + winnings;
+        await user.save();
+        
+        // Update bet status
+        bet.status = 'won';
+        bet.payoutAmount = winnings;
+        await bet.save();
+        
+        processedCount++;
+      }
+    }
+
+    // ✅ Update losing bets status
+    await Bet.updateMany(
+      { fightId, fighterChoice: { $ne: winner } },
+      { status: 'lost' }
+    );
+
+    res.json({ 
+      message: `አሸናፊው ${winnerName} ተመርጧል። ${processedCount} ውርርዶች ተከፍለዋል።`,
+      fight,
+      processedCount
+    });
+  } catch (error) {
+    console.error('Declare winner error:', error);
     res.status(500).json({ message: 'የሰርቨር ስህተት', error: error.message });
   }
 });
