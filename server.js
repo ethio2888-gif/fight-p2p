@@ -21,7 +21,6 @@ const io = socketIO(server, {
   }
 });
 
-// Render default port is often 10000, fallback to 3000 for local
 const PORT = process.env.PORT || 10000;
 
 // 2. Middleware
@@ -34,28 +33,27 @@ app.use(express.static(path.join(__dirname, 'public')));
 const Organization = require('./models/Organization');
 const Event = require('./models/Event');
 const Bet = require('./models/Bet');
-const Fight = require('./models/Fight'); // ✅ አዲስ: Fight Model
+const Fight = require('./models/Fight');
 
 // 4. Import Routes
 const authRoutes = require('./routes/auth');
-const betRoutes = require('./routes/bet'); 
-const adRoutes = require('./routes/ads'); 
-const leaderboardRoutes = require('./routes/leaderboard'); 
+const betRoutes = require('./routes/bet');
+const adRoutes = require('./routes/ads');
+const leaderboardRoutes = require('./routes/leaderboard');
 const dailyBonusRoutes = require('./routes/dailyBonus');
-const fightRoutes = require('./routes/fights'); // ✅ አዲስ: Fight Routes
+const fightRoutes = require('./routes/fights');
+const tempAdminRoutes = require('./routes/tempAdmin'); // ✅ ጊዜያዊ
 
 // 5. Use Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/bets', betRoutes); 
-app.use('/api/ads', adRoutes); 
-app.use('/api/leaderboard', leaderboardRoutes); 
+app.use('/api/bets', betRoutes);
+app.use('/api/ads', adRoutes);
+app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/daily-bonus', dailyBonusRoutes);
-app.use('/api/fights', fightRoutes); // ✅ አዲስ: Fight Routes መጠቀም (ይህ ከዳታቤዝ ያነባል)
+app.use('/api/fights', fightRoutes);
+app.use('/api/admin', tempAdminRoutes); // ✅ ጊዜያዊ
 
-// =================================================================
-// ለአሁኑ የቆየ (Legacy) ኮድ - ለ Socket.io ሙከራ እስኪፈልጉት ድረስ ይቆያል
-// ማሳሰቢያ: /api/fights ጥያቄ አሁን ከላይ ባለው fightRoutes ይያዛል (ከዳታቤዝ)
-// =================================================================
+// Legacy code for Socket.io
 let legacyFights = [
   {
     id: 1,
@@ -64,27 +62,15 @@ let legacyFights = [
     date: '2026-11-15',
     status: 'upcoming',
     bets: []
-  },
-  {
-    id: 2,
-    fighter1: { name: 'Addis Warrior', record: '10-1-0', photo: '🛡️' },
-    fighter2: { name: 'Nile Storm', record: '8-4-2', photo: '🌊' },
-    date: '2026-11-20',
-    status: 'upcoming',
-    bets: []
   }
 ];
 
 let users = [];
 
-// ማሳሰቢያ: ይህ መስመር ተወግዷል ምክንያቱም አሁን `fightRoutes` `/api/fights`ን ይይዛል
-// app.get('/api/fights', (req, res) => { res.json(fights); });
-
 app.get('/api/users', (req, res) => {
   res.json(users);
 });
 
-// Socket.io for real-time updates (እስካሁን legacyFightsን ይጠቀማል)
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
@@ -105,7 +91,6 @@ io.on('connection', (socket) => {
     console.log('User disconnected:', socket.id);
   });
 });
-// =================================================================
 
 // 6. Start Server
 server.listen(PORT, () => {
