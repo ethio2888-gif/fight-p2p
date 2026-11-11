@@ -14,7 +14,7 @@
             min-height: 100vh;
             padding: 20px;
         }
-        .container { max-width: 900px; margin: 0 auto; }
+        .container { max-width: 1000px; margin: 0 auto; }
         .glass-panel {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(16px);
@@ -57,7 +57,6 @@
             border-color: #ffd700;
         }
         
-        /* File Input Styling */
         .form-group input[type="file"] {
             padding: 10px;
             cursor: pointer;
@@ -112,6 +111,52 @@
             width: auto;
         }
         .btn-danger:hover { background: #e94560; color: white; }
+        .btn-warning {
+            background: rgba(255, 215, 0, 0.2);
+            color: #ffd700;
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            padding: 8px 16px;
+            font-size: 0.85em;
+            width: auto;
+        }
+        .btn-warning:hover { background: #ffd700; color: #0a0a12; }
+        .btn-success {
+            background: rgba(78, 204, 163, 0.2);
+            color: #4ecca3;
+            border: 1px solid rgba(78, 204, 163, 0.3);
+            padding: 8px 16px;
+            font-size: 0.85em;
+            width: auto;
+        }
+        .btn-success:hover { background: #4ecca3; color: #0a0a12; }
+        .btn-logout {
+            background: rgba(233, 69, 96, 0.15);
+            color: #e94560;
+            border: 1px solid rgba(233, 69, 96, 0.3);
+            padding: 10px 20px;
+            font-size: 0.9em;
+            width: auto;
+        }
+        .btn-logout:hover { background: #e94560; color: white; }
+
+        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn {
+            flex: 1;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            color: #ccc;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Montserrat', sans-serif;
+            transition: all 0.3s;
+        }
+        .tab-btn:hover, .tab-btn.active {
+            background: rgba(255, 215, 0, 0.15);
+            color: #ffd700;
+            border-color: rgba(255, 215, 0, 0.3);
+        }
 
         .fight-list { margin-top: 20px; }
         .fight-item {
@@ -142,83 +187,137 @@
             font-size: 0.8em;
             margin-top: 5px;
             min-height: 1.2em;
+            color: #888;
         }
 
         @media (max-width: 600px) {
             .row { flex-direction: column; gap: 10px; }
+            .fight-item { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .fight-item > div:last-child { width: 100%; display: flex; gap: 8px; flex-wrap: wrap; }
+            .fight-item > div:last-child .btn { flex: 1; text-align: center; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <a href="/" class="nav-link">← Back to Home</a>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <a href="/" class="nav-link">← Back to Home</a>
+            <button onclick="logout()" class="btn btn-logout">🚪 Logout</button>
+        </div>
+        
         <h1>🛠️ Secret Admin Dashboard</h1>
 
         <div id="messageBox" class="message"></div>
 
-        <!-- Add Fight Form -->
-        <div class="glass-panel">
-            <h2 style="margin-bottom: 20px; color: #fff; font-size: 1.2em;">Add New Fight</h2>
-            <form id="addFightForm">
-                <div class="row">
-                    <div class="col">
-                        <div class="form-group">
-                            <label>Fighter 1 Name</label>
-                            <input type="text" id="f1Name" required placeholder="e.g., Ethiopian Lion">
-                        </div>
-                        <div class="form-group">
-                            <label>Fighter 1 Record</label>
-                            <input type="text" id="f1Record" placeholder="e.g., 15-2-0">
-                        </div>
-                        <div class="form-group">
-                            <label>Fighter 1 Photo (Upload Image)</label>
-                            <input type="file" id="f1PhotoFile" accept="image/*">
-                            <p id="upload1Status" class="upload-status"></p>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="form-group">
-                            <label>Fighter 2 Name</label>
-                            <input type="text" id="f2Name" required placeholder="e.g., African Thunder">
-                        </div>
-                        <div class="form-group">
-                            <label>Fighter 2 Record</label>
-                            <input type="text" id="f2Record" placeholder="e.g., 12-3-1">
-                        </div>
-                        <div class="form-group">
-                            <label>Fighter 2 Photo (Upload Image)</label>
-                            <input type="file" id="f2PhotoFile" accept="image/*">
-                            <p id="upload2Status" class="upload-status"></p>
-                        </div>
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col">
-                        <div class="form-group">
-                            <label>Date</label>
-                            <input type="date" id="fightDate" required>
-                        </div>
-                    </div>
-                    <div class="col">
-                        <div class="form-group">
-                            <label>Status</label>
-                            <select id="fightStatus">
-                                <option value="upcoming">Upcoming</option>
-                                <option value="live">Live</option>
-                                <option value="finished">Finished</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <button type="submit" class="btn btn-primary">➕ Add Fight</button>
-            </form>
+        <!-- Tab Buttons -->
+        <div class="tab-buttons">
+            <button id="tab-fights" class="tab-btn active" onclick="showTab('fights')">🥊 Fights Management</button>
+            <button id="tab-ads" class="tab-btn" onclick="showTab('ads')">📢 Ad Management</button>
         </div>
 
-        <!-- Existing Fights List -->
-        <div class="glass-panel">
-            <h2 style="margin-bottom: 20px; color: #fff; font-size: 1.2em;">Current Fights</h2>
-            <div id="fightsList" class="fight-list">
-                <p style="text-align: center; color: #888;">Loading...</p>
+        <!-- Fights Tab -->
+        <div id="fightsTab">
+            <div class="glass-panel">
+                <h2 id="formTitle" style="margin-bottom: 20px; color: #fff; font-size: 1.2em;">Add New Fight</h2>
+                <form id="fightForm">
+                    <input type="hidden" id="existingF1Photo">
+                    <input type="hidden" id="existingF2Photo">
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-group">
+                                <label>Fighter 1 Name</label>
+                                <input type="text" id="f1Name" required placeholder="e.g., Ethiopian Lion">
+                            </div>
+                            <div class="form-group">
+                                <label>Fighter 1 Record</label>
+                                <input type="text" id="f1Record" placeholder="e.g., 15-2-0">
+                            </div>
+                            <div class="form-group">
+                                <label>Fighter 1 Photo (Upload Image)</label>
+                                <input type="file" id="f1PhotoFile" accept="image/*">
+                                <p id="upload1Status" class="upload-status"></p>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <label>Fighter 2 Name</label>
+                                <input type="text" id="f2Name" required placeholder="e.g., African Thunder">
+                            </div>
+                            <div class="form-group">
+                                <label>Fighter 2 Record</label>
+                                <input type="text" id="f2Record" placeholder="e.g., 12-3-1">
+                            </div>
+                            <div class="form-group">
+                                <label>Fighter 2 Photo (Upload Image)</label>
+                                <input type="file" id="f2PhotoFile" accept="image/*">
+                                <p id="upload2Status" class="upload-status"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-group">
+                                <label>Date</label>
+                                <input type="date" id="fightDate" required>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group">
+                                <label>Status</label>
+                                <select id="fightStatus">
+                                    <option value="upcoming">Upcoming</option>
+                                    <option value="live">Live</option>
+                                    <option value="finished">Finished</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">➕ Add Fight</button>
+                    <button type="button" id="cancelEditBtn" class="btn" style="margin-top: 10px; background: rgba(255, 255, 255, 0.1); color: #ccc; display: none;" onclick="cancelEdit()">❌ Cancel Edit</button>
+                </form>
+            </div>
+
+            <div class="glass-panel">
+                <h2 style="margin-bottom: 20px; color: #fff; font-size: 1.2em;">Current Fights</h2>
+                <div id="fightsList" class="fight-list">
+                    <p style="text-align: center; color: #888;">Loading...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ads Tab -->
+        <div id="adsTab" style="display: none;">
+            <div class="glass-panel">
+                <h2 style="margin-bottom: 20px; color: #fff; font-size: 1.2em;">Add New Advertisement</h2>
+                <form id="adForm">
+                    <div class="form-group">
+                        <label>Ad Title</label>
+                        <input type="text" id="adTitle" required placeholder="e.g., Summer Sale">
+                    </div>
+                    <div class="form-group">
+                        <label>Media Type</label>
+                        <select id="adType">
+                            <option value="image">Image 🖼️</option>
+                            <option value="video">Video 🎥</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Media URL (Image or Video Link)</label>
+                        <input type="url" id="adMediaUrl" required placeholder="https://example.com/ad.jpg">
+                    </div>
+                    <div class="form-group">
+                        <label>Target URL (Click Link)</label>
+                        <input type="url" id="adTargetUrl" required placeholder="https://example.com">
+                    </div>
+                    <button type="submit" class="btn btn-primary">📢 Add Ad</button>
+                </form>
+            </div>
+
+            <div class="glass-panel">
+                <h2 style="margin-bottom: 20px; color: #fff; font-size: 1.2em;">Current Advertisements</h2>
+                <div id="adsList" class="fight-list">
+                    <p style="text-align: center; color: #888;">Loading...</p>
+                </div>
             </div>
         </div>
     </div>
@@ -231,8 +330,10 @@
             window.location.href = '/login.html';
         }
 
+        let editingFightId = null;
         const messageBox = document.getElementById('messageBox');
         const fightsList = document.getElementById('fightsList');
+        const adsList = document.getElementById('adsList');
 
         function showMessage(text, type) {
             messageBox.innerText = text;
@@ -241,13 +342,24 @@
             setTimeout(() => { messageBox.style.display = 'none'; }, 4000);
         }
 
+        function showTab(tabName) {
+            document.getElementById('fightsTab').style.display = tabName === 'fights' ? 'block' : 'none';
+            document.getElementById('adsTab').style.display = tabName === 'ads' ? 'block' : 'none';
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+
+            if (tabName === 'fights') loadFights();
+            if (tabName === 'ads') loadAds();
+        }
+
         // 🔒 Secure Image Upload Function
         async function uploadImage(fileInputId, statusId) {
             const fileInput = document.getElementById(fileInputId);
             const statusEl = document.getElementById(statusId);
             
             if (!fileInput.files || fileInput.files.length === 0) {
-                return null; // No file selected
+                return null;
             }
 
             const file = fileInput.files[0];
@@ -260,9 +372,7 @@
             try {
                 const response = await fetch('/api/upload', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
+                    headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
                 });
 
@@ -312,43 +422,83 @@
                         ${fight.fighter1.name} 🆚 ${fight.fighter2.name}
                         <div class="fight-date">${new Date(fight.date).toLocaleDateString()} • ${fight.status.toUpperCase()}</div>
                     </div>
-                    <button class="btn btn-danger" onclick="deleteFight('${fight._id}')">Delete</button>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        ${fight.status === 'finished' || fight.status === 'live' ? `<button class="btn btn-success" onclick="declareWinner('${fight._id}', '${fight.fighter1.name}', '${fight.fighter2.name}')">🏆 Winner</button>` : ''}
+                        <button class="btn btn-warning" onclick="editFight('${fight._id}', '${fight.fighter1.name}', '${fight.fighter2.name}', '${fight.fighter1.record}', '${fight.fighter2.record}', '${fight.fighter1.photo}', '${fight.fighter2.photo}', '${fight.date}', '${fight.status}')">✏️ Edit</button>
+                        <button class="btn btn-danger" onclick="deleteFight('${fight._id}')">🗑️ Delete</button>
+                    </div>
                 </div>
             `).join('');
         }
 
-        // Add new fight with Image Upload
-        document.getElementById('addFightForm').addEventListener('submit', async (e) => {
+        function editFight(id, f1Name, f2Name, f1Record, f2Record, f1Photo, f2Photo, date, status) {
+            editingFightId = id;
+            document.getElementById('f1Name').value = f1Name;
+            document.getElementById('f2Name').value = f2Name;
+            document.getElementById('f1Record').value = f1Record;
+            document.getElementById('f2Record').value = f2Record;
+            document.getElementById('fightDate').value = date.split('T')[0];
+            document.getElementById('fightStatus').value = status;
+            
+            document.getElementById('existingF1Photo').value = f1Photo;
+            document.getElementById('existingF2Photo').value = f2Photo;
+            
+            document.getElementById('upload1Status').innerText = '💡 Current photo will be kept if no new file is selected.';
+            document.getElementById('upload2Status').innerText = '💡 Current photo will be kept if no new file is selected.';
+            
+            document.getElementById('formTitle').innerText = '✏️ Edit Fight';
+            document.getElementById('submitBtn').innerText = '💾 Update Fight';
+            document.getElementById('cancelEditBtn').style.display = 'block';
+            
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelEdit() {
+            editingFightId = null;
+            document.getElementById('fightForm').reset();
+            document.getElementById('formTitle').innerText = 'Add New Fight';
+            document.getElementById('submitBtn').innerText = '➕ Add Fight';
+            document.getElementById('cancelEditBtn').style.display = 'none';
+            document.getElementById('upload1Status').innerText = '';
+            document.getElementById('upload2Status').innerText = '';
+        }
+
+        // Add or Update fight
+        document.getElementById('fightForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const submitBtn = document.getElementById('submitBtn');
             const originalBtnText = submitBtn.innerText;
             submitBtn.innerText = '⏳ Processing...';
             submitBtn.disabled = true;
 
-            // 1. Upload images first (if selected)
             const f1PhotoUrl = await uploadImage('f1PhotoFile', 'upload1Status');
             const f2PhotoUrl = await uploadImage('f2PhotoFile', 'upload2Status');
 
-            // 2. Prepare fight data (fallback to default emoji 🥊 if no image uploaded)
+            const existingF1Photo = document.getElementById('existingF1Photo').value || '🥊';
+            const existingF2Photo = document.getElementById('existingF2Photo').value || '🥊';
+
             const fightData = {
                 fighter1: {
                     name: document.getElementById('f1Name').value,
                     record: document.getElementById('f1Record').value || '0-0-0',
-                    photo: f1PhotoUrl || '🥊'
+                    photo: f1PhotoUrl || existingF1Photo
                 },
                 fighter2: {
                     name: document.getElementById('f2Name').value,
                     record: document.getElementById('f2Record').value || '0-0-0',
-                    photo: f2PhotoUrl || '🥊'
+                    photo: f2PhotoUrl || existingF2Photo
                 },
                 date: document.getElementById('fightDate').value,
                 status: document.getElementById('fightStatus').value
             };
 
             try {
-                const res = await fetch('/api/fights', {
-                    method: 'POST',
+                const url = editingFightId ? `/api/fights/${editingFightId}` : '/api/fights';
+                const method = editingFightId ? 'PUT' : 'POST';
+                
+                const res = await fetch(url, {
+                    method: method,
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
@@ -358,13 +508,12 @@
                 const data = await res.json();
                 
                 if (res.ok) {
-                    showMessage('✅ Fight added successfully!', 'success');
-                    document.getElementById('addFightForm').reset();
-                    document.getElementById('upload1Status').innerText = '';
-                    document.getElementById('upload2Status').innerText = '';
-                    loadFights(); // Refresh list
+                    showMessage(editingFightId ? '✅ Fight updated successfully!' : '✅ Fight added successfully!', 'success');
+                    document.getElementById('fightForm').reset();
+                    cancelEdit();
+                    loadFights();
                 } else {
-                    showMessage('❌ ' + (data.message || 'Failed to add fight'), 'error');
+                    showMessage('❌ ' + (data.message || 'Failed to save fight'), 'error');
                 }
             } catch (error) {
                 showMessage('❌ Network error.', 'error');
@@ -374,17 +523,55 @@
             }
         });
 
-        // Delete fight
+        async function declareWinner(fightId, f1Name, f2Name) {
+            const winner = prompt(`Who won the fight?\n1. ${f1Name}\n2. ${f2Name}\n\nEnter 1 or 2:`);
+            if (!winner || (winner !== '1' && winner !== '2')) {
+                showMessage('❌ Invalid selection. Must be 1 or 2.', 'error');
+                return;
+            }
+            
+            const payoutAmount = prompt(`Enter the payout amount/multiplier per winning bet (e.g., 2 for double, or 100 for fixed points):`, '2');
+            if (!payoutAmount || isNaN(payoutAmount) || parseFloat(payoutAmount) <= 0) {
+                showMessage('❌ Invalid payout amount.', 'error');
+                return;
+            }
+
+            const winnerName = winner === '1' ? f1Name : f2Name;
+            const winnerKey = winner === '1' ? 'fighter1' : 'fighter2';
+
+            try {
+                const res = await fetch(`/api/fights/${fightId}/declare-winner`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        winner: winnerKey,
+                        winnerName: winnerName,
+                        payout: parseFloat(payoutAmount)
+                    })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showMessage(`🏆 Winner declared: ${winnerName}! Payouts processed.`, 'success');
+                    loadFights();
+                } else {
+                    showMessage('❌ ' + (data.message || 'Failed to declare winner'), 'error');
+                }
+            } catch (error) {
+                showMessage('❌ Network error.', 'error');
+            }
+        }
+
         async function deleteFight(fightId) {
             if (!confirm('Are you sure you want to delete this fight?')) return;
-            
             try {
                 const res = await fetch(`/api/fights/${fightId}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 const data = await res.json();
-                
                 if (res.ok) {
                     showMessage('✅ Fight deleted successfully!', 'success');
                     loadFights();
@@ -394,6 +581,93 @@
             } catch (error) {
                 showMessage('❌ Network error.', 'error');
             }
+        }
+
+        // Ad Management Functions
+        async function loadAds() {
+            try {
+                const res = await fetch('/api/ads', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const ads = await res.json();
+                renderAds(ads);
+            } catch (error) {
+                showMessage('❌ Failed to load ads.', 'error');
+            }
+        }
+
+        function renderAds(ads) {
+            if (!ads || ads.length === 0) {
+                adsList.innerHTML = '<p style="text-align: center; color: #888;">No ads found.</p>';
+                return;
+            }
+            adsList.innerHTML = ads.map(ad => `
+                <div class="fight-item">
+                    <div class="fight-info">
+                        <strong>${ad.title}</strong> <span style="font-size:0.8em; color:#888;">(${ad.type === 'video' ? '🎥 Video' : '🖼️ Image'})</span>
+                        <div class="fight-date">Link: ${ad.targetUrl}</div>
+                    </div>
+                    <button class="btn btn-danger" onclick="deleteAd('${ad._id}')">🗑️ Delete</button>
+                </div>
+            `).join('');
+        }
+
+        document.getElementById('adForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const adData = {
+                title: document.getElementById('adTitle').value,
+                type: document.getElementById('adType').value,
+                mediaUrl: document.getElementById('adMediaUrl').value,
+                targetUrl: document.getElementById('adTargetUrl').value
+            };
+
+            try {
+                const res = await fetch('/api/ads', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(adData)
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showMessage('✅ Ad added successfully!', 'success');
+                    document.getElementById('adForm').reset();
+                    loadAds();
+                } else {
+                    showMessage('❌ ' + (data.message || 'Failed to add ad'), 'error');
+                }
+            } catch (error) {
+                showMessage('❌ Network error.', 'error');
+            }
+        });
+
+        async function deleteAd(adId) {
+            if (!confirm('Are you sure you want to delete this ad?')) return;
+            try {
+                const res = await fetch(`/api/ads/${adId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showMessage('✅ Ad deleted successfully!', 'success');
+                    loadAds();
+                } else {
+                    showMessage('❌ ' + (data.message || 'Failed to delete'), 'error');
+                }
+            } catch (error) {
+                showMessage('❌ Network error.', 'error');
+            }
+        }
+
+        // Logout Function
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            localStorage.removeItem('balance');
+            window.location.href = '/';
         }
 
         // Initialize
