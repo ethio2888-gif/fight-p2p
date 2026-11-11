@@ -42,7 +42,7 @@ const adRoutes = require('./routes/ads');
 const leaderboardRoutes = require('./routes/leaderboard');
 const dailyBonusRoutes = require('./routes/dailyBonus');
 const fightRoutes = require('./routes/fights');
-const tempAdminRoutes = require('./routes/tempAdmin'); // ✅ ጊዜያዊ
+const adminRoutes = require('./routes/admin'); // ✅ አዲስ: Secret Admin Route
 
 // 5. Use Routes
 app.use('/api/auth', authRoutes);
@@ -51,7 +51,8 @@ app.use('/api/ads', adRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/daily-bonus', dailyBonusRoutes);
 app.use('/api/fights', fightRoutes);
-app.use('/api/admin', tempAdminRoutes); // ✅ ጊዜያዊ
+// ✅ አዲስ: Secret Admin Route (በጣም ረጅም እና ውስብስብ ስም)
+app.use('/api/x7k9m2p4q8w3n5v1z8b6d4f2h9j1k3m5', adminRoutes);
 
 // Legacy code for Socket.io
 let legacyFights = [
