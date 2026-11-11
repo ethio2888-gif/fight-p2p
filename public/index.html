@@ -146,7 +146,24 @@
             text-align: center !important; 
             padding: 5px !important;
         }
-        .fighter-photo { font-size: 3em; margin-bottom: 8px; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4)); }
+        .fighter-photo { 
+            font-size: 3em; 
+            margin-bottom: 8px; 
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4)); 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 80px;
+        }
+        /* ✅ አዲስ: ለምስል (Image) የሚሆን CSS */
+        .fighter-photo img {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #ffd700;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+        }
         .fighter-name { font-family: 'Montserrat', sans-serif; font-size: 1.1em; font-weight: 800; color: #ffffff; margin-bottom: 4px; }
         .fighter-record { color: #888; font-size: 0.8em; font-weight: 500; background: rgba(255,255,255,0.05); display: inline-block; padding: 3px 10px; border-radius: 20px; }
         
@@ -279,6 +296,15 @@
         const token = localStorage.getItem('token');
         const username = localStorage.getItem('username');
 
+        // ✅ አዲስ ፈንክሽን: ፎቶው URL ከሆነ እንደ ምስል (<img>) ያሳያል፣ ካልሆነ እንደ ጽሁፍ/ኢሞጂ ያሳያል
+        function renderFighterPhoto(photo) {
+            if (!photo) return '🥊';
+            if (typeof photo === 'string' && (photo.startsWith('http://') || photo.startsWith('https://'))) {
+                return `<img src="${photo}" alt="Fighter Photo">`;
+            }
+            return photo; // Fallback to emoji like 🦁
+        }
+
         function initializeUserInterface() {
             const userInfoDiv = document.getElementById('userInfo');
             const authButtonsDiv = document.getElementById('authButtons');
@@ -339,7 +365,6 @@
             } catch (error) { console.error('Bonus error:', error); }
         }
 
-        // ✅ የተስተካከለው loadFights Function
         async function loadFights() {
             const container = document.getElementById('fights-container');
             container.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">⏳ Loading fights from database...</p>';
@@ -397,6 +422,7 @@
             const statusClass = fight.status === 'live' ? 'status-live' : 'status-upcoming';
             const statusText = fight.status === 'live' ? '🔴 LIVE' : '📅 UPCOMING';
 
+            // ✅ እዚህ ላይ renderFighterPhoto ፈንክሽን ተጠቅሟል
             card.innerHTML = `
                 <div class="fight-header">
                     <span class="${statusClass}">${statusText}</span>
@@ -404,13 +430,13 @@
                 </div>
                 <div class="matchup-container">
                     <div class="fighter">
-                        <div class="fighter-photo">${fight.fighter1.photo}</div>
+                        <div class="fighter-photo">${renderFighterPhoto(fight.fighter1.photo)}</div>
                         <div class="fighter-name">${fight.fighter1.name}</div>
                         <div class="fighter-record">${fight.fighter1.record}</div>
                     </div>
                     <div class="vs-badge">VS</div>
                     <div class="fighter">
-                        <div class="fighter-photo">${fight.fighter2.photo}</div>
+                        <div class="fighter-photo">${renderFighterPhoto(fight.fighter2.photo)}</div>
                         <div class="fighter-name">${fight.fighter2.name}</div>
                         <div class="fighter-record">${fight.fighter2.record}</div>
                     </div>
