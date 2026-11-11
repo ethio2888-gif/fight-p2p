@@ -42,7 +42,7 @@ const adRoutes = require('./routes/ads');
 const leaderboardRoutes = require('./routes/leaderboard');
 const dailyBonusRoutes = require('./routes/dailyBonus');
 const fightRoutes = require('./routes/fights');
-// ⚠️ የ adminRoutes መስመር ተወግዷል (ለደህንነት)
+const uploadRoutes = require('./routes/upload'); // ✅ አዲስ የ upload route
 
 // 5. Use Routes
 app.use('/api/auth', authRoutes);
@@ -51,7 +51,7 @@ app.use('/api/ads', adRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/daily-bonus', dailyBonusRoutes);
 app.use('/api/fights', fightRoutes);
-// ⚠️ የ admin app.use መስመር ተወግዷል (ለደህንነት)
+app.use('/api/upload', uploadRoutes); // ✅ አዲስ የ upload route
 
 // Legacy code for Socket.io
 let legacyFights = [
