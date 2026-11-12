@@ -100,8 +100,7 @@ router.delete('/:id', requireAdmin, async (req, res) => {
   }
 });
 
-// 5. ADMIN ONLY: አሸናፊ መምረጥ እና P2P ክፍያ ማከፋፈል (Declare Winner & Payout)
-// ✅ የተሻሻለ: ፋይቱ "finished" ቢሆንም አሸናፊ መምረጥ ይቻላል
+// 5. ADMIN ONLY: አሸናፊ መምረጥ፣ ክፍያ ማከፋፈል እና ፋይቱን በራስ-ሰር መሰረዝ (Declare Winner, Payout & Auto-Delete)
 router.post('/:id/declare-winner', requireAdmin, async (req, res) => {
   try {
     const { winner, winnerName } = req.body; // winner: 'red' or 'blue'
@@ -112,23 +111,18 @@ router.post('/:id/declare-winner', requireAdmin, async (req, res) => {
       return res.status(404).json({ message: 'ፋይት አልተገኘም' });
     }
 
-    // ✅ የተሻሻለ ሎጂክ: አሸናፊው ተመርጧል ወይ አይደለም ብቻ እንፈትሻለን (ከ status ጋር አንገድብም)
+    // ✅ Security: አሸናፊው ቀድሞ ተመርጧል ወይ? (Double Payout መከላከያ)
     if (fight.winner === winner) {
       return res.status(400).json({ 
         message: `አሸናፊው (${winnerName}) አስቀድሞ ተመርጧል። ውርርዶች አንድ ጊዜ ብቻ ይከፈላሉ።` 
       });
     }
 
-    // ✅ Update fight status and winner
-    fight.status = 'finished';
-    fight.winner = winner; // 'red' or 'blue'
-    await fight.save();
-
-    // ✅ Find all matched P2P bets for this fight (Note: Bet model uses 'event' for fightId)
+    // ✅ 1. Find all matched P2P bets for this fight BEFORE deleting
     const matchedBets = await Bet.find({ event: fightId, status: 'matched' });
 
     let settledCount = 0;
-    // ✅ Use the existing secure settleBet logic for each bet (Handles commission automatically)
+    // ✅ 2. Use the existing secure settleBet logic for each bet (Handles commission automatically)
     for (const bet of matchedBets) {
       try {
         await Bet.settleBet(bet._id, winner);
@@ -138,9 +132,11 @@ router.post('/:id/declare-winner', requireAdmin, async (req, res) => {
       }
     }
 
+    // ✅ 3. AUTO-DELETE: አሸናፊ ከተመረጠና ክፍያ ከተከፈለ በኋላ ፋይቱን ከዳታቤዝ ሰርዝ
+    await Fight.findByIdAndDelete(fightId);
+
     res.json({ 
-      message: `አሸናፊው ${winnerName} ተመርጧል። ${settledCount} የተጣመሩ ውርርዶች በተሳካ ሁኔታ ተከፍለዋል (ኮሚሽን ተቀንሷል)።`,
-      fight,
+      message: `አሸናፊው ${winnerName} ተመርጧል። ${settledCount} የተጣመሩ ውርርዶች በተሳካ ሁኔታ ተከፍለዋል (ኮሚሽን ተቀንሷል)። ፋይቱ በራስ-ሰር ተሰርዟል።`,
       settledCount
     });
   } catch (error) {
