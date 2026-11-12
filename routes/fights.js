@@ -1,8 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Fight = require('../models/Fight');
-const Bet = require('../models/Bet'); // ለውርርድ ክፍያ ተጨምሯል
-const User = require('../models/User'); // ለተጠቃሚ ሂሳብ ማሻሻል ተጨምሯል
+const Bet = require('../models/Bet'); 
 const { requireAdmin } = require('../middleware/adminMiddleware');
 
 // 🔒 SECURITY FIRST: የግቤት መረጃ ማረጋገጫ (Input Validation)
@@ -27,7 +26,7 @@ const validateFightInput = (data) => {
 // 1. PUBLIC: ሁሉንም ፋይቶች ማግኘት (ለፊት-ኤንድ ማሳያ)
 router.get('/', async (req, res) => {
   try {
-    const fights = await Fight.find().sort({ date: 1 }).select('-bets'); // ቀላል መረጃ ብቻ
+    const fights = await Fight.find().sort({ date: 1 }).select('-bets');
     res.json(fights);
   } catch (error) {
     res.status(500).json({ message: 'የሰርቨር ስህተት', error: error.message });
@@ -39,7 +38,6 @@ router.post('/', requireAdmin, async (req, res) => {
   try {
     const { fighter1, fighter2, date, status } = req.body;
     
-    // ✅ Security: Input Validation
     const errors = validateFightInput({ fighter1, fighter2, date });
     if (errors.length > 0) {
       return res.status(400).json({ message: errors.join(', ') });
@@ -50,7 +48,7 @@ router.post('/', requireAdmin, async (req, res) => {
       fighter2,
       date,
       status: status || 'upcoming',
-      addedBy: req.userId // ከ requireAdmin middleware የተገኘ
+      addedBy: req.userId
     });
 
     await newFight.save();
@@ -102,10 +100,11 @@ router.delete('/:id', requireAdmin, async (req, res) => {
   }
 });
 
-// 5. ADMIN ONLY: አሸናፊ መምረጥ እና ነጥብ ማከፋፈል (Declare Winner & Payout)
+// 5. ADMIN ONLY: አሸናፊ መምረጥ እና P2P ክፍያ ማከፋፈል (Declare Winner & Payout)
+// ✅ የተሻሻለ: ፋይቱ "finished" ቢሆንም አሸናፊ መምረጥ ይቻላል
 router.post('/:id/declare-winner', requireAdmin, async (req, res) => {
   try {
-    const { winner, winnerName, payout } = req.body; // winner: 'fighter1' or 'fighter2'
+    const { winner, winnerName } = req.body; // winner: 'red' or 'blue'
     const fightId = req.params.id;
 
     const fight = await Fight.findById(fightId);
@@ -113,46 +112,36 @@ router.post('/:id/declare-winner', requireAdmin, async (req, res) => {
       return res.status(404).json({ message: 'ፋይት አልተገኘም' });
     }
 
-    if (fight.status === 'finished') {
-      return res.status(400).json({ message: 'ይህ ፋይት አስቀድሞ ተጠናቋል' });
+    // ✅ የተሻሻለ ሎጂክ: አሸናፊው ተመርጧል ወይ አይደለም ብቻ እንፈትሻለን (ከ status ጋር አንገድብም)
+    if (fight.winner === winner) {
+      return res.status(400).json({ 
+        message: `አሸናፊው (${winnerName}) አስቀድሞ ተመርጧል። ውርርዶች አንድ ጊዜ ብቻ ይከፈላሉ።` 
+      });
     }
 
     // ✅ Update fight status and winner
     fight.status = 'finished';
-    fight.winner = winner; 
+    fight.winner = winner; // 'red' or 'blue'
     await fight.save();
 
-    // ✅ Find all winning bets for this fight
-    const winningBets = await Bet.find({ fightId, fighterChoice: winner });
+    // ✅ Find all matched P2P bets for this fight (Note: Bet model uses 'event' for fightId)
+    const matchedBets = await Bet.find({ event: fightId, status: 'matched' });
 
-    let processedCount = 0;
-    for (const bet of winningBets) {
-      const user = await User.findById(bet.userId);
-      if (user) {
-        // Calculate winnings (bet amount * payout multiplier)
-        const winnings = bet.amount * payout;
-        user.balance = (user.balance || 0) + winnings;
-        await user.save();
-        
-        // Update bet status
-        bet.status = 'won';
-        bet.payoutAmount = winnings;
-        await bet.save();
-        
-        processedCount++;
+    let settledCount = 0;
+    // ✅ Use the existing secure settleBet logic for each bet (Handles commission automatically)
+    for (const bet of matchedBets) {
+      try {
+        await Bet.settleBet(bet._id, winner);
+        settledCount++;
+      } catch (err) {
+        console.error(`Failed to settle bet ${bet._id}:`, err.message);
       }
     }
 
-    // ✅ Update losing bets status
-    await Bet.updateMany(
-      { fightId, fighterChoice: { $ne: winner } },
-      { status: 'lost' }
-    );
-
     res.json({ 
-      message: `አሸናፊው ${winnerName} ተመርጧል። ${processedCount} ውርርዶች ተከፍለዋል።`,
+      message: `አሸናፊው ${winnerName} ተመርጧል። ${settledCount} የተጣመሩ ውርርዶች በተሳካ ሁኔታ ተከፍለዋል (ኮሚሽን ተቀንሷል)።`,
       fight,
-      processedCount
+      settledCount
     });
   } catch (error) {
     console.error('Declare winner error:', error);
