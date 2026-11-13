@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fight P2P - Premium Boxing Betting</title>
+    <title>Fight P2P - Premium Boxing Match Predictions</title>
+    <meta name="description" content="Fight P2P is a premium peer-to-peer boxing match prediction platform using virtual points. No real money involved.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -248,6 +249,9 @@
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
         footer { text-align: center; padding: 30px 20px; border-top: 1px solid rgba(255, 255, 255, 0.05); margin-top: 30px; color: #555; font-size: 0.8em; }
+        .footer-links { margin-top: 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+        .footer-links a { color: #888; text-decoration: none; margin: 0 8px; transition: color 0.3s; }
+        .footer-links a:hover { color: #ffd700; }
 
         @media (max-width: 600px) {
             h1 { font-size: 2em; }
@@ -268,7 +272,7 @@
 
         <header>
             <h1>🥊 Fight P2P</h1>
-            <p class="tagline">Premium Peer-to-Peer Boxing Betting Arena</p>
+            <p class="tagline">Premium Peer-to-Peer Boxing Match Predictions</p>
         </header>
 
         <div class="user-balance glass-panel">
@@ -289,8 +293,14 @@
         </div>
 
         <footer>
-            <p>© 2026 Fight P2P - Bet Responsibly</p>
+            <p>© 2026 Fight P2P - Play Responsibly</p>
             <p style="margin-top: 8px; opacity: 0.7;">Virtual Points System - No Real Money</p>
+            <div class="footer-links">
+                <a href="/about.html">About</a>
+                <a href="/contact.html">Contact</a>
+                <a href="/privacy.html">Privacy Policy</a>
+                <a href="/terms.html">Terms & Conditions</a>
+            </div>
         </footer>
     </div>
 
@@ -315,7 +325,7 @@
                 authButtonsDiv.innerHTML = `
                     <a href="/history.html" class="btn" style="margin-right: 8px; background: rgba(0, 191, 255, 0.15); color: #00bfff; border: 1px solid rgba(0, 191, 255, 0.3);">📜 History</a>
                     <a href="/leaderboard.html" class="btn" style="margin-right: 8px; background: rgba(255, 215, 0, 0.15); color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.3);">🏆 Leaderboard</a>
-                    <a href="/bets.html" class="btn" style="margin-right: 8px; background: rgba(78, 204, 163, 0.15); color: #4ecca3; border: 1px solid rgba(78, 204, 163, 0.3);">ክት ውርርዶች</a>
+                    <a href="/bets.html" class="btn" style="margin-right: 8px; background: rgba(78, 204, 163, 0.15); color: #4ecca3; border: 1px solid rgba(78, 204, 163, 0.3);">Open Predictions</a>
                     <button class="btn btn-logout" onclick="logout()">Logout</button>
                 `;
                 updateBalance();
@@ -339,7 +349,7 @@
                 btn.disabled = true;
                 if (!btn.innerHTML.includes('LOGIN')) {
                     btn.dataset.originalText = btn.innerHTML;
-                    btn.innerHTML = 'LOGIN TO BET';
+                    btn.innerHTML = 'LOGIN TO PREDICT';
                 }
             });
         }
@@ -422,7 +432,7 @@
             const card = document.createElement('div');
             card.className = 'fight-card glass-panel';
             const statusClass = fight.status === 'live' ? 'status-live' : 'status-upcoming';
-            const statusText = fight.status === 'live' ? ' LIVE' : '📅 UPCOMING';
+            const statusText = fight.status === 'live' ? '🔴 LIVE' : '📅 UPCOMING';
 
             card.innerHTML = `
                 <div class="fight-header">
@@ -444,7 +454,7 @@
                 </div>
                 <div class="betting-section">
                     <div class="bet-amount-selector">
-                        <label>Select Bet Amount (Min: 50, Max: 10,000)</label>
+                        <label>Select Prediction Amount (Min: 50, Max: 10,000)</label>
                         <div class="quick-bet-grid">
                             <button class="quick-bet-btn" data-amount="50">50</button>
                             <button class="quick-bet-btn" data-amount="100">100</button>
@@ -455,13 +465,13 @@
                         <input type="number" class="custom-bet-input" placeholder="Custom amount" min="50" max="10000" value="100">
                     </div>
                     <div class="bet-buttons">
-                        <button class="bet-btn bet-btn-fighter1">Bet on ${fight.fighter1.name}</button>
-                        <button class="bet-btn bet-btn-fighter2">Bet on ${fight.fighter2.name}</button>
+                        <button class="bet-btn bet-btn-fighter1">Predict ${fight.fighter1.name}</button>
+                        <button class="bet-btn bet-btn-fighter2">Predict ${fight.fighter2.name}</button>
                     </div>
                     <div class="message"></div>
                     ${fight.bets && fight.bets.length > 0 ? `
                         <div class="current-bets">
-                            <strong style="color:#888; font-size:0.75em; display:block; margin-bottom:8px; text-transform:uppercase;">Current Bets:</strong>
+                            <strong style="color:#888; font-size:0.75em; display:block; margin-bottom:8px; text-transform:uppercase;">Current Predictions:</strong>
                             ${fight.bets.map(bet => `<div class="bet-item"><span>${bet.fighter}</span><span style="color:#ffd700; font-weight:700;">${bet.amount} pts</span></div>`).join('')}
                         </div>
                     ` : ''}
@@ -479,8 +489,8 @@
             const card = messageDiv.closest('.fight-card');
             const betAmount = parseInt(card.querySelector('.custom-bet-input').value);
 
-            if (isNaN(betAmount) || betAmount < 50) { showMessage(messageDiv, 'error', '❌ Minimum bet is 50 points!'); return; }
-            if (betAmount > 10000) { showMessage(messageDiv, 'error', ' Maximum bet is 10,000 points!'); return; }
+            if (isNaN(betAmount) || betAmount < 50) { showMessage(messageDiv, 'error', '❌ Minimum prediction is 50 points!'); return; }
+            if (betAmount > 10000) { showMessage(messageDiv, 'error', '❌ Maximum prediction is 10,000 points!'); return; }
             if (userPoints < betAmount) { showMessage(messageDiv, 'error', '❌ Insufficient points!'); return; }
 
             showMessage(messageDiv, 'success', `⏳ Processing ${betAmount} points...`);
@@ -496,10 +506,10 @@
                     userPoints = data.newBalance || (userPoints - betAmount);
                     localStorage.setItem('balance', userPoints);
                     updateBalance();
-                    showMessage(messageDiv, 'success', `✅ Bet placed on ${fighterName}!`);
+                    showMessage(messageDiv, 'success', `✅ Prediction placed on ${fighterName}!`);
                     setTimeout(() => window.location.reload(), 1500);
                 } else {
-                    showMessage(messageDiv, 'error', '❌ ' + (data.message || 'Bet failed'));
+                    showMessage(messageDiv, 'error', '❌ ' + (data.message || 'Prediction failed'));
                 }
             } catch (error) {
                 showMessage(messageDiv, 'error', '❌ Network error.');
@@ -518,7 +528,6 @@
             if (el) el.textContent = userPoints.toLocaleString() + ' Points';
         }
 
-        // ✅ የተሻለ: ለ Image እና Video Ads የሚሰራ ፈንክሽን (backward compatible)
         async function loadAds() {
             try {
                 const response = await fetch('/api/ads');
@@ -534,7 +543,6 @@
                     link.target = '_blank';
                     link.rel = 'noopener noreferrer';
                     
-                    // ✅ Backward compatible: mediaUrl ይም imageUrl
                     const mediaUrl = ad.mediaUrl || ad.imageUrl;
                     let mediaElement = '';
                     
