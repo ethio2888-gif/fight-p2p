@@ -65,8 +65,21 @@ router.post('/create', authenticateToken, async (req, res) => {
   try {
     const { eventId, fighterChoice, amount } = req.body;
 
-    if (!fighterChoice || !amount) {
-      return res.status(400).json({ message: 'ሁሉም መረጃዎች ያስፈልጋሉ (fighterChoice እና amount)' });
+    if (!eventId || !fighterChoice || !amount) {
+      return res.status(400).json({ message: 'ሁሉም መረጃዎች ያስፈልጋሉ (eventId, fighterChoice እና amount)' });
+    }
+
+    // 🔒 SECURITY FIRST: ተጠቃሚው ለዚህ ፋይት (eventId) አስቀድሞ predict አድርጎ አለመሆኑን መፈተሽ
+    const existingBet = await Bet.findOne({
+      creator: req.userId,
+      event: eventId,
+      status: { $in: ['open', 'matched'] } // ክፍት ወይም የተጣመረ ውርርድ
+    });
+
+    if (existingBet) {
+      return res.status(400).json({ 
+        message: 'ለዚህ ፋይት አስቀድመው ግምት (prediction) ሰጥተዋል! አንድ ተጫዋች ለአንድ ፋይት አንድ ጊዜ ብቻ መምረጥ ይችላል።' 
+      });
     }
 
     // 🔒 SECURITY FIRST: መጠኑን ወደ ቁጥር መቀየር እና ገደቦችን ማረጋገጥ
@@ -101,7 +114,7 @@ router.post('/create', authenticateToken, async (req, res) => {
 
     const newBet = new Bet({
       creator: req.userId,
-      event: eventId || null,
+      event: eventId,
       fighterChoice,
       amount: betAmount,
       status: 'open',
@@ -137,7 +150,24 @@ router.post('/accept/:betId', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'የራስዎን ውርርድ መቀበል አይችሉም' });
     }
 
+    // 🔒 SECURITY FIRST: ተቀባዩ ለዚህ ፋይት (eventId) አስቀድሞ predict አድርጎ አለመሆኑን መፈተሽ
+    const existingBet = await Bet.findOne({
+      creator: req.userId,
+      event: bet.event,
+      status: { $in: ['open', 'matched'] }
+    });
+
+    if (existingBet) {
+      return res.status(400).json({ 
+        message: 'ለዚህ ፋይት አስቀድመው ግምት (prediction) ሰጥተዋል! አንድ ተጫዋች ለአንድ ፋይት አንድ ጊዜ ብቻ መምረጥ ይችላል።' 
+      });
+    }
+
     const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'ተጠቃሚ አልተገኘም' });
+    }
+
     if (user.balance < bet.amount) {
       return res.status(400).json({ message: 'በቂ ሂሳብ የለዎትም' });
     }
@@ -192,7 +222,7 @@ router.post('/settle/:betId', authenticateToken, async (req, res) => {
   }
 });
 
-// ✅ 6. አዲስ: ውርርድ መሰረዝ (Cancel Open Bet) - ተጫዋች A
+// 6. ውርርድ መሰረዝ (Cancel Open Bet) - ተጫዋች A
 router.post('/cancel/:betId', authenticateToken, async (req, res) => {
   try {
     const bet = await Bet.findById(req.params.betId);
