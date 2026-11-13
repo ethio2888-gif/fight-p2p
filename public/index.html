@@ -338,10 +338,9 @@
         }
 
         function logout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('username');
-            localStorage.removeItem('balance');
-            window.location.reload();
+            localStorage.clear();
+            sessionStorage.clear();
+            window.location.href = '/login.html';
         }
 
         function disableAllBetButtons() {
@@ -488,6 +487,8 @@
             }
             const card = messageDiv.closest('.fight-card');
             const betAmount = parseInt(card.querySelector('.custom-bet-input').value);
+            const betBtn1 = card.querySelector('.bet-btn-fighter1');
+            const betBtn2 = card.querySelector('.bet-btn-fighter2');
 
             if (isNaN(betAmount) || betAmount < 50) { showMessage(messageDiv, 'error', '❌ Minimum prediction is 50 points!'); return; }
             if (betAmount > 10000) { showMessage(messageDiv, 'error', '❌ Maximum prediction is 10,000 points!'); return; }
@@ -499,7 +500,8 @@
                 const response = await fetch('/api/bets/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ fighterChoice, amount: betAmount, fightId: fightId })
+                    // 🔒 SECURITY FIRST: Send eventId as expected by backend validation
+                    body: JSON.stringify({ eventId: fightId, fighterChoice, amount: betAmount })
                 });
                 const data = await response.json();
                 if (response.ok) {
@@ -507,6 +509,19 @@
                     localStorage.setItem('balance', userPoints);
                     updateBalance();
                     showMessage(messageDiv, 'success', `✅ Prediction placed on ${fighterName}!`);
+                    
+                    // 🔒 SECURITY FIRST: Disable buttons immediately to prevent multiple predictions
+                    betBtn1.disabled = true;
+                    betBtn2.disabled = true;
+                    betBtn1.innerText = 'Prediction Placed';
+                    betBtn2.innerText = 'Prediction Placed';
+                    betBtn1.style.background = '#1a1a25';
+                    betBtn1.style.color = '#444';
+                    betBtn1.style.border = '1px solid #333';
+                    betBtn2.style.background = '#1a1a25';
+                    betBtn2.style.color = '#444';
+                    betBtn2.style.border = '1px solid #333';
+                    
                     setTimeout(() => window.location.reload(), 1500);
                 } else {
                     showMessage(messageDiv, 'error', '❌ ' + (data.message || 'Prediction failed'));
