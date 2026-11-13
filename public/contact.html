@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - Fight P2P</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: radial-gradient(circle at 50% 0%, #1e1e30 0%, #0a0a12 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 15px;
+            line-height: 1.7;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+        .back-link { display: inline-block; color: #4ecca3; text-decoration: none; margin-bottom: 20px; font-weight: 600; }
+        h1 {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 2em;
+            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+        h2 { font-family: 'Montserrat', sans-serif; color: #ffd700; font-size: 1.2em; margin: 20px 0 10px; }
+        p { margin-bottom: 15px; color: #ccc; }
+        .contact-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .contact-card strong { color: #4ecca3; }
+        .contact-card a { color: #ffd700; text-decoration: none; word-break: break-all; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; color: #ffd700; font-weight: 600; font-size: 0.9em; }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            font-size: 1em;
+        }
+        input:focus, textarea:focus { outline: none; border-color: #ffd700; }
+        textarea { min-height: 120px; resize: vertical; }
+        .btn {
+            background: linear-gradient(135deg, #4ecca3 0%, #3fa890 100%);
+            color: #0a0a12;
+            padding: 14px 30px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 800;
+            font-family: 'Montserrat', sans-serif;
+            cursor: pointer;
+            font-size: 1em;
+            width: 100%;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 10px;
+            display: none;
+            text-align: center;
+            font-weight: 600;
+        }
+        .message.success { background: rgba(78, 204, 163, 0.1); color: #4ecca3; border: 1px solid rgba(78, 204, 163, 0.2); }
+        .message.error { background: rgba(233, 69, 96, 0.1); color: #e94560; border: 1px solid rgba(233, 69, 96, 0.2); }
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 30px;
+            color: #555;
+            font-size: 0.8em;
+        }
+        .footer-links { margin-top: 10px; }
+        .footer-links a { color: #888; text-decoration: none; margin: 0 10px; }
+        .footer-links a:hover { color: #ffd700; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-link">← Back to Home</a>
+        <div class="glass-panel">
+            <h1>📬 Contact Us</h1>
+            <p>Have a question, suggestion, or need support? We're here to help! Choose the best way to reach us below.</p>
+            <h2>📧 Email Support</h2>
+            <div class="contact-card">
+                <strong>General Inquiries:</strong><br>
+                <a href="mailto:support@fightp2p.com">support@fightp2p.com</a>
+            </div>
+            <div class="contact-card">
+                <strong>Partnership & Advertising:</strong><br>
+                <a href="mailto:partners@fightp2p.com">partners@fightp2p.com</a>
+            </div>
+            <div class="contact-card">
+                <strong>Report a Bug or Issue:</strong><br>
+                <a href="mailto:bugs@fightp2p.com">bugs@fightp2p.com</a>
+            </div>
+            <h2>💬 Send Us a Message</h2>
+            <form id="contactForm">
+                <div class="form-group">
+                    <label>Your Name</label>
+                    <input type="text" id="name" required maxlength="50" placeholder="Enter your full name">
+                </div>
+                <div class="form-group">
+                    <label>Your Email</label>
+                    <input type="email" id="email" required placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label>Subject</label>
+                    <input type="text" id="subject" required maxlength="100" placeholder="What is this about?">
+                </div>
+                <div class="form-group">
+                    <label>Message</label>
+                    <textarea id="message" required maxlength="1000" placeholder="Write your message here..."></textarea>
+                </div>
+                <button type="submit" class="btn">📨 Send Message</button>
+                <div class="message" id="formMessage"></div>
+            </form>
+            <h2>🕐 Response Time</h2>
+            <p>We aim to respond to all inquiries within <strong>24-48 hours</strong> on business days. For urgent issues, please include "URGENT" in your subject line.</p>
+            <h2>🌍 Location</h2>
+            <p>Fight P2P is a digital platform serving users worldwide, with a special focus on the Ethiopian boxing community.</p>
+        </div>
+        <footer>
+            <p>© 2026 Fight P2P - Play Responsibly</p>
+            <p style="margin-top: 8px; opacity: 0.7;">Virtual Points System - No Real Money</p>
+            <div class="footer-links">
+                <a href="/about.html">About</a>
+                <a href="/contact.html">Contact</a>
+                <a href="/privacy.html">Privacy Policy</a>
+                <a href="/terms.html">Terms & Conditions</a>
+            </div>
+        </footer>
+    </div>
+    <script>
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const name = document.getElementById('name').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const subject = document.getElementById('subject').value.trim();
+            const message = document.getElementById('message').value.trim();
+            const msgDiv = document.getElementById('formMessage');
+            if (name.length < 2 || name.length > 50) {
+                msgDiv.className = 'message error';
+                msgDiv.innerText = '❌ Name must be between 2 and 50 characters.';
+                msgDiv.style.display = 'block';
+                return;
+            }
+            if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                msgDiv.className = 'message error';
+                msgDiv.innerText = '❌ Please enter a valid email address.';
+                msgDiv.style.display = 'block';
+                return;
+            }
+            if (subject.length < 3 || message.length < 10) {
+                msgDiv.className = 'message error';
+                msgDiv.innerText = '❌ Subject and message are too short.';
+                msgDiv.style.display = 'block';
+                return;
+            }
+            msgDiv.className = 'message success';
+            msgDiv.innerText = '✅ Thank you! Your message has been received. We will respond within 24-48 hours.';
+            msgDiv.style.display = 'block';
+            this.reset();
+        });
+    </script>
+</body>
+</html>
