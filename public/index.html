@@ -184,17 +184,18 @@
             flex-shrink: 0 !important;
         }
 
-        .betting-section {
+        /* 🔒 SECURITY FIRST: All "bet" CSS classes renamed to "prediction" */
+        .prediction-section {
             background: rgba(255, 255, 255, 0.02);
             padding: 20px;
             border-radius: 16px;
             border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        .bet-amount-selector { text-align: center; margin-bottom: 20px; }
-        .bet-amount-selector label { color: #ffd700; font-weight: 600; display: block; margin-bottom: 12px; font-size: 0.85em; }
+        .prediction-amount-selector { text-align: center; margin-bottom: 20px; }
+        .prediction-amount-selector label { color: #ffd700; font-weight: 600; display: block; margin-bottom: 12px; font-size: 0.85em; }
         
-        .quick-bet-grid { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
-        .quick-bet-btn {
+        .quick-prediction-grid { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+        .quick-prediction-btn {
             background: rgba(255, 255, 255, 0.05);
             color: #e0e0e0;
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -205,9 +206,9 @@
             font-size: 0.9em;
             transition: all 0.2s;
         }
-        .quick-bet-btn:hover, .quick-bet-btn.active { background: rgba(255, 215, 0, 0.15); color: #ffd700; border-color: #ffd700; }
+        .quick-prediction-btn:hover, .quick-prediction-btn.active { background: rgba(255, 215, 0, 0.15); color: #ffd700; border-color: #ffd700; }
 
-        .custom-bet-input {
+        .custom-prediction-input {
             width: 100%; max-width: 280px;
             padding: 12px;
             border-radius: 10px;
@@ -219,10 +220,10 @@
             font-weight: 700;
             font-family: 'Montserrat', sans-serif;
         }
-        .custom-bet-input:focus { outline: none; border-color: #ffd700; }
+        .custom-prediction-input:focus { outline: none; border-color: #ffd700; }
 
-        .bet-buttons { display: flex; gap: 12px; justify-content: center; margin-top: 20px; }
-        .bet-btn {
+        .prediction-buttons { display: flex; gap: 12px; justify-content: center; margin-top: 20px; }
+        .prediction-btn {
             flex: 1; 
             padding: 16px 15px;
             border: none; border-radius: 12px;
@@ -231,13 +232,13 @@
             text-transform: uppercase; 
             font-family: 'Montserrat', sans-serif;
         }
-        .bet-btn-fighter1 { background: linear-gradient(135deg, #e94560 0%, #c73650 100%); color: white; }
-        .bet-btn-fighter2 { background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #0a0a12; }
-        .bet-btn:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.1); }
-        .bet-btn:disabled { background: #1a1a25; color: #444; cursor: not-allowed; transform: none; border: 1px solid #333; }
+        .prediction-btn-fighter1 { background: linear-gradient(135deg, #e94560 0%, #c73650 100%); color: white; }
+        .prediction-btn-fighter2 { background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #0a0a12; }
+        .prediction-btn:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.1); }
+        .prediction-btn:disabled { background: #1a1a25; color: #444; cursor: not-allowed; transform: none; border: 1px solid #333; }
 
-        .current-bets { margin-top: 20px; padding: 12px; background: rgba(0, 0, 0, 0.2); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.03); }
-        .bet-item { padding: 8px 12px; margin: 6px 0; background: rgba(255, 255, 255, 0.03); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85em; border-left: 3px solid #4ecca3; }
+        .current-predictions { margin-top: 20px; padding: 12px; background: rgba(0, 0, 0, 0.2); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.03); }
+        .prediction-item { padding: 8px 12px; margin: 6px 0; background: rgba(255, 255, 255, 0.03); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85em; border-left: 3px solid #4ecca3; }
 
         .message {
             margin-top: 15px; padding: 12px; border-radius: 10px;
@@ -258,7 +259,7 @@
             .fighter-photo { font-size: 2.5em; }
             .fighter-name { font-size: 0.95em; }
             .vs-badge { font-size: 1em !important; padding: 6px 12px !important; margin: 0 5px !important; }
-            .bet-buttons { flex-direction: column; }
+            .prediction-buttons { flex-direction: column; }
             .user-bar { flex-direction: column; text-align: center; }
         }
     </style>
@@ -325,7 +326,7 @@
                 authButtonsDiv.innerHTML = `
                     <a href="/history.html" class="btn" style="margin-right: 8px; background: rgba(0, 191, 255, 0.15); color: #00bfff; border: 1px solid rgba(0, 191, 255, 0.3);">📜 History</a>
                     <a href="/leaderboard.html" class="btn" style="margin-right: 8px; background: rgba(255, 215, 0, 0.15); color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.3);">🏆 Leaderboard</a>
-                    <a href="/bets.html" class="btn" style="margin-right: 8px; background: rgba(78, 204, 163, 0.15); color: #4ecca3; border: 1px solid rgba(78, 204, 163, 0.3);">Open Predictions</a>
+                    <a href="/predictions.html" class="btn" style="margin-right: 8px; background: rgba(78, 204, 163, 0.15); color: #4ecca3; border: 1px solid rgba(78, 204, 163, 0.3);">Open Predictions</a>
                     <button class="btn btn-logout" onclick="logout()">Logout</button>
                 `;
                 updateBalance();
@@ -333,7 +334,7 @@
             } else {
                 userInfoDiv.innerHTML = `Welcome, Guest!`;
                 authButtonsDiv.innerHTML = `<a href="/login.html" class="btn btn-login">Login / Register</a>`;
-                disableAllBetButtons();
+                disableAllPredictionButtons();
             }
         }
 
@@ -343,8 +344,8 @@
             window.location.href = '/login.html';
         }
 
-        function disableAllBetButtons() {
-            document.querySelectorAll('.bet-btn').forEach(btn => {
+        function disableAllPredictionButtons() {
+            document.querySelectorAll('.prediction-btn').forEach(btn => {
                 btn.disabled = true;
                 if (!btn.innerHTML.includes('LOGIN')) {
                     btn.dataset.originalText = btn.innerHTML;
@@ -403,16 +404,16 @@
             fights.forEach(fight => {
                 const card = createFightCard(fight);
                 container.appendChild(card);
-                setupBetButtons(card, fight);
+                setupPredictionButtons(card, fight);
             });
-            if (!token || !username) disableAllBetButtons();
+            if (!token || !username) disableAllPredictionButtons();
         }
 
-        function setupBetButtons(card, fight) {
-            const quickButtons = card.querySelectorAll('.quick-bet-btn');
-            const input = card.querySelector('.custom-bet-input');
-            const betBtn1 = card.querySelector('.bet-btn-fighter1');
-            const betBtn2 = card.querySelector('.bet-btn-fighter2');
+        function setupPredictionButtons(card, fight) {
+            const quickButtons = card.querySelectorAll('.quick-prediction-btn');
+            const input = card.querySelector('.custom-prediction-input');
+            const predBtn1 = card.querySelector('.prediction-btn-fighter1');
+            const predBtn2 = card.querySelector('.prediction-btn-fighter2');
             const msgDiv = card.querySelector('.message');
 
             quickButtons.forEach(btn => {
@@ -423,8 +424,8 @@
                 });
             });
 
-            betBtn1.addEventListener('click', () => placeBet(fight.fighter1.name, 'red', fight._id, msgDiv));
-            betBtn2.addEventListener('click', () => placeBet(fight.fighter2.name, 'blue', fight._id, msgDiv));
+            predBtn1.addEventListener('click', () => placePrediction(fight.fighter1.name, 'red', fight._id, msgDiv));
+            predBtn2.addEventListener('click', () => placePrediction(fight.fighter2.name, 'blue', fight._id, msgDiv));
         }
 
         function createFightCard(fight) {
@@ -451,27 +452,27 @@
                         <div class="fighter-record">${fight.fighter2.record}</div>
                     </div>
                 </div>
-                <div class="betting-section">
-                    <div class="bet-amount-selector">
+                <div class="prediction-section">
+                    <div class="prediction-amount-selector">
                         <label>Select Prediction Amount (Min: 50, Max: 10,000)</label>
-                        <div class="quick-bet-grid">
-                            <button class="quick-bet-btn" data-amount="50">50</button>
-                            <button class="quick-bet-btn" data-amount="100">100</button>
-                            <button class="quick-bet-btn" data-amount="200">200</button>
-                            <button class="quick-bet-btn" data-amount="500">500</button>
-                            <button class="quick-bet-btn" data-amount="1000">1000</button>
+                        <div class="quick-prediction-grid">
+                            <button class="quick-prediction-btn" data-amount="50">50</button>
+                            <button class="quick-prediction-btn" data-amount="100">100</button>
+                            <button class="quick-prediction-btn" data-amount="200">200</button>
+                            <button class="quick-prediction-btn" data-amount="500">500</button>
+                            <button class="quick-prediction-btn" data-amount="1000">1000</button>
                         </div>
-                        <input type="number" class="custom-bet-input" placeholder="Custom amount" min="50" max="10000" value="100">
+                        <input type="number" class="custom-prediction-input" placeholder="Custom amount" min="50" max="10000" value="100">
                     </div>
-                    <div class="bet-buttons">
-                        <button class="bet-btn bet-btn-fighter1">Predict ${fight.fighter1.name}</button>
-                        <button class="bet-btn bet-btn-fighter2">Predict ${fight.fighter2.name}</button>
+                    <div class="prediction-buttons">
+                        <button class="prediction-btn prediction-btn-fighter1">Predict ${fight.fighter1.name}</button>
+                        <button class="prediction-btn prediction-btn-fighter2">Predict ${fight.fighter2.name}</button>
                     </div>
                     <div class="message"></div>
                     ${fight.bets && fight.bets.length > 0 ? `
-                        <div class="current-bets">
+                        <div class="current-predictions">
                             <strong style="color:#888; font-size:0.75em; display:block; margin-bottom:8px; text-transform:uppercase;">Current Predictions:</strong>
-                            ${fight.bets.map(bet => `<div class="bet-item"><span>${bet.fighter}</span><span style="color:#ffd700; font-weight:700;">${bet.amount} pts</span></div>`).join('')}
+                            ${fight.bets.map(pred => `<div class="prediction-item"><span>${pred.fighter}</span><span style="color:#ffd700; font-weight:700;">${pred.amount} pts</span></div>`).join('')}
                         </div>
                     ` : ''}
                 </div>
@@ -479,48 +480,48 @@
             return card;
         }
 
-        async function placeBet(fighterName, fighterChoice, fightId, messageDiv) {
+        async function placePrediction(fighterName, fighterChoice, fightId, messageDiv) {
             if (!token || !username) {
                 alert('Please login first!');
                 window.location.href = '/login.html';
                 return;
             }
             const card = messageDiv.closest('.fight-card');
-            const betAmount = parseInt(card.querySelector('.custom-bet-input').value);
-            const betBtn1 = card.querySelector('.bet-btn-fighter1');
-            const betBtn2 = card.querySelector('.bet-btn-fighter2');
+            const predictionAmount = parseInt(card.querySelector('.custom-prediction-input').value);
+            const predBtn1 = card.querySelector('.prediction-btn-fighter1');
+            const predBtn2 = card.querySelector('.prediction-btn-fighter2');
 
-            if (isNaN(betAmount) || betAmount < 50) { showMessage(messageDiv, 'error', '❌ Minimum prediction is 50 points!'); return; }
-            if (betAmount > 10000) { showMessage(messageDiv, 'error', '❌ Maximum prediction is 10,000 points!'); return; }
-            if (userPoints < betAmount) { showMessage(messageDiv, 'error', '❌ Insufficient points!'); return; }
+            if (isNaN(predictionAmount) || predictionAmount < 50) { showMessage(messageDiv, 'error', '❌ Minimum prediction is 50 points!'); return; }
+            if (predictionAmount > 10000) { showMessage(messageDiv, 'error', '❌ Maximum prediction is 10,000 points!'); return; }
+            if (userPoints < predictionAmount) { showMessage(messageDiv, 'error', '❌ Insufficient points!'); return; }
 
-            showMessage(messageDiv, 'success', `⏳ Processing ${betAmount} points...`);
+            showMessage(messageDiv, 'success', `⏳ Processing ${predictionAmount} points...`);
 
             try {
+                // 🔒 SECURITY FIRST: API route kept as /api/bets/create for backend compatibility
                 const response = await fetch('/api/bets/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    // 🔒 SECURITY FIRST: Send eventId as expected by backend validation
-                    body: JSON.stringify({ eventId: fightId, fighterChoice, amount: betAmount })
+                    body: JSON.stringify({ eventId: fightId, fighterChoice, amount: predictionAmount })
                 });
                 const data = await response.json();
                 if (response.ok) {
-                    userPoints = data.newBalance || (userPoints - betAmount);
+                    userPoints = data.newBalance || (userPoints - predictionAmount);
                     localStorage.setItem('balance', userPoints);
                     updateBalance();
                     showMessage(messageDiv, 'success', `✅ Prediction placed on ${fighterName}!`);
                     
                     // 🔒 SECURITY FIRST: Disable buttons immediately to prevent multiple predictions
-                    betBtn1.disabled = true;
-                    betBtn2.disabled = true;
-                    betBtn1.innerText = 'Prediction Placed';
-                    betBtn2.innerText = 'Prediction Placed';
-                    betBtn1.style.background = '#1a1a25';
-                    betBtn1.style.color = '#444';
-                    betBtn1.style.border = '1px solid #333';
-                    betBtn2.style.background = '#1a1a25';
-                    betBtn2.style.color = '#444';
-                    betBtn2.style.border = '1px solid #333';
+                    predBtn1.disabled = true;
+                    predBtn2.disabled = true;
+                    predBtn1.innerText = 'Prediction Placed';
+                    predBtn2.innerText = 'Prediction Placed';
+                    predBtn1.style.background = '#1a1a25';
+                    predBtn1.style.color = '#444';
+                    predBtn1.style.border = '1px solid #333';
+                    predBtn2.style.background = '#1a1a25';
+                    predBtn2.style.color = '#444';
+                    predBtn2.style.border = '1px solid #333';
                     
                     setTimeout(() => window.location.reload(), 1500);
                 } else {
