@@ -7,20 +7,21 @@ const { requireAdmin } = require('../middleware/adminMiddleware');
 const isValidUrl = (string) => {
   try {
     const url = new URL(string);
+    // ለደህንነት http ወይም https ብቻ ይፈቀዳል (javascript: ወይም data: ይከለከላሉ)
     return url.protocol === 'http:' || url.protocol === 'https:';
   } catch (_) {
     return false;
   }
 };
 
-// 1. PUBLIC: ሁሉንም Active ማስታወቂያዎችን ማግኘት (SIMPLIFIED & COMPATIBLE)
+// 1. PUBLIC: ሁሉንም Active ማስታወቂያዎችን ማግኘት
 router.get('/', async (req, res) => {
   try {
-    // ለ debugging ሁሉንም ማስታወቂያዎች እናመጣለን (isActive: true ብቻ)
-    // mediaUrl ወይም imageUrl ሁለቱንም እንዲመልስ እናደርጋለን
+    // 🚀 HIGH TRAFFIC: Limit results to prevent loading thousands of records
     const ads = await Ad.find({ isActive: true })
       .select('title type mediaUrl imageUrl targetUrl isActive')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .limit(50); 
     
     res.json(ads);
   } catch (error) {
@@ -34,11 +35,16 @@ router.post('/', requireAdmin, async (req, res) => {
   try {
     const { title, type, mediaUrl, imageUrl, targetUrl, endDate } = req.body;
     
-    // ✅ Security: Input Validation (mediaUrl ወይም imageUrl አንዱ መኖር አለበት)
+    // ✅ Security: Input Validation & Sanitization
     const finalMediaUrl = mediaUrl || imageUrl;
+    const cleanTitle = title ? String(title).trim() : '';
     
-    if (!title || !finalMediaUrl || !targetUrl) {
+    if (!cleanTitle || !finalMediaUrl || !targetUrl) {
       return res.status(400).json({ message: 'ርዕስ፣ ሚዲያ ሊንክ እና የሚሄድበት ሊንክ ያስፈልጋሉ' });
+    }
+
+    if (cleanTitle.length > 100) {
+      return res.status(400).json({ message: 'ርዕስ ከ100 ቁምፊዎች በላይ መሆን አይችልም' });
     }
 
     const finalType = type || 'image';
@@ -51,8 +57,13 @@ router.post('/', requireAdmin, async (req, res) => {
       return res.status(400).json({ message: 'ሚዲያ ሊንክ እና የሚሄድበት ሊንክ ትክክለኛ የ HTTP/HTTPS ሊንክ መሆን አለባቸው' });
     }
 
+    // 🔒 SECURITY FIRST: የመጨረሻ ቀን ቢኖር ትክክለኛነቱን ማረጋገጥ
+    if (endDate && isNaN(Date.parse(endDate))) {
+      return res.status(400).json({ message: 'ትክክለኛ ያልሆነ የመጨረሻ ቀን ቅርጸት' });
+    }
+
     const newAd = new Ad({
-      title,
+      title: cleanTitle,
       type: finalType,
       mediaUrl: finalMediaUrl,
       imageUrl: finalMediaUrl, // ለ backward compatibility
@@ -79,6 +90,7 @@ router.delete('/:id', requireAdmin, async (req, res) => {
     }
     res.json({ message: 'ማስታወቂያ በተሳካ ሁኔታ ተሰርዟል' });
   } catch (error) {
+    console.error('Ad DELETE Error:', error);
     res.status(500).json({ message: 'የሰርቨር ስህተት', error: error.message });
   }
 });
@@ -104,6 +116,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
     
     res.json({ message: 'የማስታወቂያው ሁኔታ ተቀይሯል', ad });
   } catch (error) {
+    console.error('Ad PUT Error:', error);
     res.status(500).json({ message: 'የሰርቨር ስህተት', error: error.message });
   }
 });
