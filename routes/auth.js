@@ -3,13 +3,17 @@ const router = express.Router();
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
-// JWT Secret (Best practice: Use process.env.JWT_SECRET in production)
-const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key_change_this_later';
+// 🔒 SECURITY FIRST: JWT Secret must be loaded from Environment Variables (Render)
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.error('⚠️ CRITICAL: JWT_SECRET is not defined in Environment Variables!');
+}
 
 // 1. ምዝገባ (Register) - 🔒 SECURITY FIRST: Mass Assignment Prevention
 router.post('/register', async (req, res) => {
   try {
-    // ✅ Security: Explicitly extract only allowed fields to prevent mass assignment attacks (e.g., isAdmin: true)
+    // ✅ Security: Explicitly extract only allowed fields
     const { username, email, password } = req.body;
     
     // Basic input validation
@@ -24,7 +28,6 @@ router.post('/register', async (req, res) => {
     }
 
     // Create new user (Password is hashed automatically by the User model pre-save hook)
-    // ✅ Security: isAdmin is NOT passed here, so it defaults to false as per the schema.
     const newUser = new User({ 
       username: username.trim(), 
       email: email.trim().toLowerCase(), 
@@ -36,6 +39,13 @@ router.post('/register', async (req, res) => {
     res.status(201).json({ message: 'ተጠቃሚ በተሳካ ሁኔታ ተመዝግቧል', userId: newUser._id });
   } catch (error) {
     console.error('Register error:', error);
+    
+    // 🚀 HIGH TRAFFIC: Handle Mongoose Validation Errors gracefully (returns 400 instead of 500)
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(val => val.message);
+      return res.status(400).json({ message: messages.join(', ') });
+    }
+    
     res.status(500).json({ message: 'የሰርቨር ስህተት', error: error.message });
   }
 });
@@ -70,7 +80,7 @@ router.post('/login', async (req, res) => {
       { 
         userId: user._id, 
         username: user.username,
-        isAdmin: user.isAdmin // 🔑 CRITICAL: Frontend and Backend can now verify admin status
+        isAdmin: user.isAdmin 
       }, 
       JWT_SECRET, 
       { expiresIn: '7d' }
@@ -81,7 +91,7 @@ router.post('/login', async (req, res) => {
       token, 
       username: user.username, 
       balance: user.balance,
-      isAdmin: user.isAdmin // 🔑 Send to frontend to conditionally render Admin Dashboard button
+      isAdmin: user.isAdmin 
     });
   } catch (error) {
     console.error('Login error:', error);
