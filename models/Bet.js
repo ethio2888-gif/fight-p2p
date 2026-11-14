@@ -1,25 +1,25 @@
 const mongoose = require('mongoose');
 
 const betSchema = new mongoose.Schema({
-  // ውርርዱን የፈጠረው ተጠቃሚ (ተጫዋች A)
+  // ግምቱን የፈጠረው ተጠቃሚ (ተጫዋች A)
   creator: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
 
-  // ውርርዱን የተቀበለው ተጠቃሚ (ተጫዋች B) - መጀመሪያ ላይ ባዶ ነው
+  // ግምቱን የተቀበለው ተጠቃሚ (ተጫዋች B) - መጀመሪያ ላይ ባዶ ነው
   acceptor: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     default: null
   },
 
-  // የትኛው ጨዋታ/ክስተት ላይ
+  // 🔒 SECURITY FIRST: event REQUIRED ሆኖ ተመልሷል (duplicate prediction check እንዲሰራ)
   event: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Event',
-    required: false // ✅ ማስተካከያ: ከ true ወደ false ተቀይሯል (eventId optional ስለሆነ)
+    required: true
   },
 
   // የትኛውን ተዋጊ መረጡ (ለምሳሌ: "red" ወይም "blue")
@@ -29,14 +29,14 @@ const betSchema = new mongoose.Schema({
     required: true
   },
 
-  // የውርርድ መጠን (በፖይንት)
+  // 🔒 SECURITY FIRST: min 50 ሆኖ ተስተካክሏል (ከ backend MIN_BET ጋር ለማስማማት)
   amount: {
     type: Number,
     required: true,
-    min: [10, 'ዝቅተኛው ውርርድ 10 ፖይንት ነው']
+    min: [50, 'ዝቅተኛው ግምት 50 ፖይንት ነው']
   },
 
-  // የውርርድ ሁኔታ
+  // ሁኔታ (status)
   status: {
     type: String,
     enum: ['open', 'matched', 'settled', 'cancelled'],
@@ -50,7 +50,7 @@ const betSchema = new mongoose.Schema({
     default: null
   },
 
-  // አሸናፊው የሚያገኘው ጠቅላላ ፖይንት (2x amount minus commission)
+  // አሸናፊው የሚያገኘው ጠቅላላ ፖይንት
   potentialWin: {
     type: Number,
     default: 0
@@ -59,7 +59,7 @@ const betSchema = new mongoose.Schema({
   // የመድረኩ ኮሚሽን ፐርሰንት (ለወደፊት)
   commission: {
     type: Number,
-    default: 0 // 0% ለአሁን (ለወደፊት 10% ልንጨምር እንችላለን)
+    default: 0
   },
 
   createdAt: {
@@ -73,15 +73,19 @@ const betSchema = new mongoose.Schema({
   }
 });
 
-// ✅ ውጤት ሲወጣ የሚሰራ ፈንክሽን (Settle Bet Logic)
+// ✅ ውጤት ሲወጣ የሚሰራ ፈንክሽን (Settle Prediction Logic)
 betSchema.statics.settleBet = async function(betId, winningFighter) {
   const bet = await this.findById(betId).populate('creator acceptor');
   
-  if (bet.status !== 'matched') {
-    throw new Error('ውርርዱ አልተጣመረም');
+  if (!bet) {
+    throw new Error('ግምቱ አልተገኘም');
   }
 
-  // ✅ ማስተካከያ: fighterChoice የ bet ንብረት ነው፣ የ creator አይደለም
+  if (bet.status !== 'matched') {
+    throw new Error('ግምቱ አልተጣመረም');
+  }
+
+  // ✅ ማስተካከያ: fighterChoice የ bet ንብረት ነው
   const isCreatorWinner = bet.fighterChoice === winningFighter;
   const winner = isCreatorWinner ? bet.creator : bet.acceptor;
   const loser = isCreatorWinner ? bet.acceptor : bet.creator;
@@ -94,7 +98,7 @@ betSchema.statics.settleBet = async function(betId, winningFighter) {
     $inc: { balance: winAmount }
   });
 
-  // ውርርዱን ማዘመን
+  // ግምቱን ማዘመን
   bet.status = 'settled';
   bet.winner = winner._id;
   bet.potentialWin = winAmount;
