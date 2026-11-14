@@ -35,14 +35,17 @@ const Event = require('./models/Event');
 const Bet = require('./models/Bet');
 const Fight = require('./models/Fight');
 
-// 4. Import Routes
+// 4. Import Routes & Middleware
 const authRoutes = require('./routes/auth');
 const betRoutes = require('./routes/bet');
 const adRoutes = require('./routes/ads');
 const leaderboardRoutes = require('./routes/leaderboard');
 const dailyBonusRoutes = require('./routes/dailyBonus');
 const fightRoutes = require('./routes/fights');
-const uploadRoutes = require('./routes/upload'); // ✅ አዲስ የ upload route
+const uploadRoutes = require('./routes/upload');
+
+// 🔒 SECURITY FIRST: Import admin middleware to protect uploads
+const { requireAdmin } = require('./middleware/adminMiddleware');
 
 // 5. Use Routes
 app.use('/api/auth', authRoutes);
@@ -51,9 +54,11 @@ app.use('/api/ads', adRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/daily-bonus', dailyBonusRoutes);
 app.use('/api/fights', fightRoutes);
-app.use('/api/upload', uploadRoutes); // ✅ አዲስ የ upload route
 
-// Legacy code for Socket.io
+// 🔒 SECURITY FIRST: Protect upload route so ONLY Admins can upload images (prevents Cloudinary quota abuse)
+app.use('/api/upload', requireAdmin, uploadRoutes); 
+
+// Legacy code for Socket.io (kept as is)
 let legacyFights = [
   {
     id: 1,
