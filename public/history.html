@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fight P2P - Bet History</title>
+    <title>Fight P2P - Prediction History</title>
     <style>
         /* --- Modern Reset & Base --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -118,7 +118,9 @@
         }
 
         .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 12px; }
-        .bet-date { color: #888; font-size: 0.85em; font-weight: 500; }
+        
+        /* 🔒 SECURITY FIRST: Renamed CSS classes from "bet" to "prediction" for UI cleanliness */
+        .prediction-date { color: #888; font-size: 0.85em; font-weight: 500; }
         
         .status-badge { padding: 6px 14px; border-radius: 20px; font-size: 0.75em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
         .status-open { background: rgba(255, 165, 0, 0.15); color: #ffa500; border: 1px solid rgba(255, 165, 0, 0.3); }
@@ -128,10 +130,10 @@
         .status-cancelled { background: rgba(136, 136, 136, 0.15); color: #aaa; border: 1px solid rgba(136, 136, 136, 0.3); }
 
         .card-body { display: flex; justify-content: space-between; align-items: center; }
-        .bet-details { display: flex; flex-direction: column; gap: 6px; }
-        .bet-choice { font-size: 1.1em; font-weight: 700; color: #fff; }
-        .bet-choice span { color: #ffd700; }
-        .bet-amount { color: #888; font-size: 0.9em; font-weight: 500; }
+        .prediction-details { display: flex; flex-direction: column; gap: 6px; }
+        .prediction-choice { font-size: 1.1em; font-weight: 700; color: #fff; }
+        .prediction-choice span { color: #ffd700; }
+        .prediction-amount { color: #888; font-size: 0.9em; font-weight: 500; }
         
         .potential-win { text-align: right; }
         .win-label { color: #888; font-size: 0.8em; font-weight: 500; margin-bottom: 4px; }
@@ -163,8 +165,8 @@
         </div>
 
         <header>
-            <h1>📜 Bet History</h1>
-            <p>የውርርድ ታሪክህ እዚህ ይታያል</p>
+            <h1>📜 Prediction History</h1>
+            <p>የግምት ታሪክህ እዚህ ይታያል</p>
         </header>
 
         <div id="history-container" class="history-list">
@@ -198,6 +200,7 @@
 
         async function loadHistory() {
             try {
+                // 🔒 SECURITY FIRST: API endpoint remains '/api/bets/my-bets' to maintain backend compatibility
                 const response = await fetch('https://fight-p2p.onrender.com/api/bets/my-bets', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -207,69 +210,69 @@
                     return;
                 }
 
-                const bets = await response.json();
-                displayHistory(bets);
+                const predictions = await response.json();
+                displayHistory(predictions);
             } catch (error) {
                 console.error('Error loading history:', error);
                 document.getElementById('history-container').innerHTML = '<div class="empty-state">❌ የኔትወርክ ችግር ተፈጥሯል።</div>';
             }
         }
 
-        function displayHistory(bets) {
+        function displayHistory(predictions) {
             const container = document.getElementById('history-container');
             
-            if (!bets || bets.length === 0) {
-                container.innerHTML = '<div class="empty-state">📭 እስካሁን ምንም ውርርድ አላደረግህም።</div>';
+            if (!predictions || predictions.length === 0) {
+                container.innerHTML = '<div class="empty-state">📭 እስካሁን ምንም ግምት አላደረግህም።</div>';
                 return;
             }
 
             container.innerHTML = '';
-            bets.forEach(bet => {
+            predictions.forEach(pred => {
                 const card = document.createElement('div');
                 card.className = 'history-card glass-panel';
-                card.id = `bet-card-${bet._id}`;
+                card.id = `pred-card-${pred._id}`;
 
                 // Status mapping
                 let statusClass = 'status-open';
                 let statusText = 'Open (ክፍት)';
-                let winDisplay = `<div class="win-label">Potential Win</div><div class="win-amount">${bet.potentialWin} pts</div>`;
+                let winDisplay = `<div class="win-label">Potential Win</div><div class="win-amount">${pred.potentialWin} pts</div>`;
 
-                if (bet.status === 'matched') {
+                if (pred.status === 'matched') {
                     statusClass = 'status-matched';
                     statusText = 'Matched (ተጣምሯል)';
-                } else if (bet.status === 'won') {
+                } else if (pred.status === 'won') {
                     statusClass = 'status-won';
                     statusText = 'Won (አሸንፈሃል!)';
-                    winDisplay = `<div class="win-label">Won Amount</div><div class="win-amount">${bet.potentialWin} pts</div>`;
-                } else if (bet.status === 'lost') {
+                    winDisplay = `<div class="win-label">Won Amount</div><div class="win-amount">${pred.potentialWin} pts</div>`;
+                } else if (pred.status === 'lost') {
                     statusClass = 'status-lost';
                     statusText = 'Lost (ተሳነሃል)';
-                    winDisplay = `<div class="win-label">Lost</div><div class="win-amount" style="color: #e94560;">-${bet.amount} pts</div>`;
-                } else if (bet.status === 'cancelled') {
+                    winDisplay = `<div class="win-label">Lost</div><div class="win-amount" style="color: #e94560;">-${pred.amount} pts</div>`;
+                } else if (pred.status === 'cancelled') {
                     statusClass = 'status-cancelled';
                     statusText = 'Cancelled (ተሰርዟል)';
-                    winDisplay = `<div class="win-label">Refunded</div><div class="win-amount" style="color: #aaa;">${bet.amount} pts</div>`;
+                    winDisplay = `<div class="win-label">Refunded</div><div class="win-amount" style="color: #aaa;">${pred.amount} pts</div>`;
                 }
 
-                const date = new Date(bet.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                const choiceColor = bet.fighterChoice === 'red' ? '#ff0000' : '#ffd700';
+                const date = new Date(pred.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const choiceColor = pred.fighterChoice === 'red' ? '#ff0000' : '#ffd700';
                 
-                // ✅ አዲስ: የ Cancel ቁልፍ ለፈጣሪው ብቻ ይታያል (Defense in Depth)
-                const isCreator = bet.creator && bet.creator.username === username;
+                // ✅ Defense in Depth: Cancel button only visible to creator
+                const isCreator = pred.creator && pred.creator.username === username;
                 let cancelBtn = '';
-                if (bet.status === 'open' && isCreator) {
-                    cancelBtn = `<button class="btn btn-cancel" onclick="cancelBet('${bet._id}', this)">❌ Cancel & Refund</button>`;
+                if (pred.status === 'open' && isCreator) {
+                    cancelBtn = `<button class="btn btn-cancel" onclick="cancelPrediction('${pred._id}', this)">❌ Cancel & Refund</button>`;
                 }
 
                 card.innerHTML = `
                     <div class="card-header">
-                        <span class="bet-date">📅 ${date}</span>
+                        <span class="prediction-date">📅 ${date}</span>
                         <span class="status-badge ${statusClass}">${statusText}</span>
                     </div>
                     <div class="card-body">
-                        <div class="bet-details">
-                            <div class="bet-choice">Choice: <span style="color: ${choiceColor}">${bet.fighterChoice.toUpperCase()}</span></div>
-                            <div class="bet-amount">Wager: ${bet.amount} Points</div>
+                        <div class="prediction-details">
+                            <div class="prediction-choice">Prediction: <span style="color: ${choiceColor}">${pred.fighterChoice.toUpperCase()}</span></div>
+                            <div class="prediction-amount">Points: ${pred.amount}</div>
                         </div>
                         <div class="potential-win">
                             ${winDisplay}
@@ -281,9 +284,9 @@
             });
         }
 
-        // ✅ አዲስ: ውርርድ የመሰረዝ ፈንክሽን
-        async function cancelBet(betId, btnElement) {
-            if (!confirm('Are you sure you want to cancel this bet and refund your points?')) {
+        // ✅ Updated: Cancel prediction function
+        async function cancelPrediction(predId, btnElement) {
+            if (!confirm('Are you sure you want to cancel this prediction and refund your points?')) {
                 return;
             }
 
@@ -292,7 +295,8 @@
             btnElement.innerText = '⏳ Canceling...';
 
             try {
-                const response = await fetch(`https://fight-p2p.onrender.com/api/bets/cancel/${betId}`, {
+                // 🔒 SECURITY FIRST: API endpoint remains '/api/bets/cancel' to maintain backend compatibility
+                const response = await fetch(`https://fight-p2p.onrender.com/api/bets/cancel/${predId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -324,17 +328,17 @@
                         card.remove();
                         const container = document.getElementById('history-container');
                         if (container.children.length === 0) {
-                            container.innerHTML = '<div class="empty-state">📭 እስካሁን ምንም ውርርድ አላደረግህም።</div>';
+                            container.innerHTML = '<div class="empty-state">📭 እስካሁን ምንም ግምት አላደረግህም።</div>';
                         }
                     }, 1500);
 
                 } else {
-                    alert('❌ ' + (data.message || 'Failed to cancel bet'));
+                    alert('❌ ' + (data.message || 'Failed to cancel prediction'));
                     btnElement.disabled = false;
                     btnElement.innerText = originalText;
                 }
             } catch (error) {
-                console.error('Cancel bet error:', error);
+                console.error('Cancel prediction error:', error);
                 alert('❌ Network error. Please try again.');
                 btnElement.disabled = false;
                 btnElement.innerText = originalText;
