@@ -1,7 +1,11 @@
 const jwt = require('jsonwebtoken');
 
-// JWT Secret (ከ auth.js ጋር ተመሳሳይ መሆን አለበት)
-const JWT_SECRET = process.env.JWT_SECRET || 'your_super_secret_key_change_this_later';
+// 🔒 SECURITY FIRST: JWT Secret MUST be loaded from Environment Variables (No fallback)
+const JWT_SECRET = process.env.JWT_SECRET;
+
+if (!JWT_SECRET) {
+  console.error('⚠️ CRITICAL: JWT_SECRET is not defined in Environment Variables! Admin middleware will fail securely.');
+}
 
 // 🔒 SECURITY FIRST: አድሚን ብቻ የሚደርሱበት ሚድልዌር
 const requireAdmin = (req, res, next) => {
@@ -30,7 +34,10 @@ const requireAdmin = (req, res, next) => {
     // ወደ ቀጣዩ ራውት (Route) መሄድ
     next();
   } catch (error) {
-    // Token ከከሰመ ወይም ልክ ካልሆነ
+    // 🔒 SECURITY FIRST: Differentiate between expired and invalid tokens
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'መግቢያዎ አልቋል። እባክዎ እንደገና ይግቡ' });
+    }
     return res.status(403).json({ message: 'ልክ ያልሆነ ወይም የከሰመ መግቢያ (Invalid or expired token)' });
   }
 };
