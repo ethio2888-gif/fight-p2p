@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fight P2P - Premium Login & Register</title>
+    
+    <!-- 🛡️ SECURITY FIRST: Google reCAPTCHA Script (Async defer ስለሆነ ገጹን አያዘገይም) -->
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
     <style>
         /* --- Modern Reset & Base --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -58,9 +62,7 @@
             outline: none;
         }
 
-        input::placeholder {
-            color: #666;
-        }
+        input::placeholder { color: #666; }
 
         input:focus {
             border-color: #ffd700;
@@ -90,9 +92,7 @@
             box-shadow: 0 8px 25px rgba(233, 69, 96, 0.4);
         }
 
-        button:active {
-            transform: translateY(0);
-        }
+        button:active { transform: translateY(0); }
 
         /* --- Toggle Link --- */
         .toggle-link {
@@ -134,8 +134,13 @@
             border: 1px solid rgba(233, 69, 96, 0.3);
         }
 
-        .hidden {
-            display: none;
+        .hidden { display: none; }
+
+        /* 🛡️ SECURITY FIRST: reCAPTCHA styling to match theme */
+        .g-recaptcha {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
         }
 
         @keyframes fadeIn {
@@ -145,12 +150,8 @@
 
         /* --- Responsive --- */
         @media (max-width: 480px) {
-            .container {
-                padding: 30px 20px;
-            }
-            h2 {
-                font-size: 1.5em;
-            }
+            .container { padding: 30px 20px; }
+            h2 { font-size: 1.5em; }
         }
     </style>
 </head>
@@ -163,6 +164,11 @@
             <input type="text" id="regUsername" placeholder="የተጠቃሚ ስም (Username)" autocomplete="username">
             <input type="email" id="regEmail" placeholder="ኢሜይል (Email)" autocomplete="email">
             <input type="password" id="regPassword" placeholder="የይለፍ ቃል (Password)" autocomplete="new-password">
+            
+            <!-- 🛡️ SECURITY FIRST: reCAPTCHA Widget -->
+            <!-- ⚠️ አስፈላጊ ማሳሰቢያ: YOUR_RECAPTCHA_SITE_KEY የሚለውን በእውነተኛው የ Google Site Key ይተኩ -->
+            <div class="g-recaptcha" data-sitekey="YOUR_RECAPTCHA_SITE_KEY"></div>
+            
             <button onclick="register()">መዝገብ</button>
             <p class="toggle-link" onclick="showLogin()">ድሮ መለያ አለዎት? ይግቡ</p>
             <div id="regResult" class="result"></div>
@@ -181,7 +187,7 @@
 
     <script>
         // ==========================================
-        // 🔒 SECURITY FIRST: All logic preserved exactly as before
+        // 🔒 SECURITY FIRST: All logic preserved and enhanced
         // ==========================================
         const API_URL = 'https://fight-p2p.onrender.com/api/auth';
 
@@ -197,26 +203,42 @@
             const email = document.getElementById('regEmail').value.trim();
             const password = document.getElementById('regPassword').value;
             
+            // 🛡️ SECURITY FIRST: Check if reCAPTCHA is solved
+            const recaptchaResponse = grecaptcha.getResponse();
+            
             if (!username || !email || !password) {
                 return showResult('regResult', '❌ እባክዎ ሁሉንም መስኮች ይሙሉ!', true);
+            }
+
+            if (!recaptchaResponse) {
+                return showResult('regResult', '❌ እባክዎ "እኔ ሰው ነኝ" የሚለውን ያረጋግጡ!', true);
             }
 
             try {
                 const response = await fetch(`${API_URL}/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, email, password })
+                    // 🛡️ SECURITY FIRST: Send reCAPTCHA token to backend for verification
+                    body: JSON.stringify({ 
+                        username, 
+                        email, 
+                        password,
+                        recaptchaToken: recaptchaResponse 
+                    })
                 });
                 const data = await response.json();
                 
                 if (response.ok) {
                     showResult('regResult', '✅ በተሳካ ሁኔታ ተመዝግበዋል! አሁን ይግቡ።', false);
+                    grecaptcha.reset(); // Reset captcha after success
                     setTimeout(showLogin, 1500);
                 } else {
                     showResult('regResult', '❌ ' + (data.message || 'ስህተት ተፈጥሯል'), true);
+                    grecaptcha.reset(); // Reset captcha on error so user can try again
                 }
             } catch (error) {
                 showResult('regResult', '❌ ከሰርቨር ጋር መገናኘት አልተሳካም።', true);
+                grecaptcha.reset();
             }
         }
 
@@ -237,14 +259,13 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    // Token እና መረጃ በ LocalStorage ውስጥ ማከማቸት
+                    // 🔒 Securely store essential data
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('username', data.username);
                     localStorage.setItem('balance', data.balance || 1000);
                     
                     showResult('loginResult', `✅ በተሳካ ሁኔታ ገብተዋል! እየተመላለስን...`, false);
                     
-                    // ቀጥታ ወደ ዋናው ገጽ መሄድ
                     setTimeout(() => {
                         window.location.href = '/'; 
                     }, 1500);
