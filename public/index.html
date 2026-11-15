@@ -6,6 +6,10 @@
     <title>Fight P2P - Premium Boxing Match Predictions</title>
     <meta name="description" content="Fight P2P is a premium peer-to-peer boxing match prediction platform using virtual points. No real money involved.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- 🟢 ADSTERRA PLACEHOLDER: Paste your Adsterra Pop-under or Direct Link script here -->
+    <!-- <script type='text/javascript' src='//YOUR_ADSTERRA_SCRIPT.js'></script> -->
+
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -184,7 +188,6 @@
             flex-shrink: 0 !important;
         }
 
-        /* 🔒 SECURITY FIRST: All "bet" CSS classes renamed to "prediction" */
         .prediction-section {
             background: rgba(255, 255, 255, 0.02);
             padding: 20px;
@@ -237,15 +240,13 @@
         .prediction-btn:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.1); }
         .prediction-btn:disabled { background: #1a1a25; color: #444; cursor: not-allowed; transform: none; border: 1px solid #333; }
 
-        .current-predictions { margin-top: 20px; padding: 12px; background: rgba(0, 0, 0, 0.2); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.03); }
-        .prediction-item { padding: 8px 12px; margin: 6px 0; background: rgba(255, 255, 255, 0.03); border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85em; border-left: 3px solid #4ecca3; }
-
         .message {
             margin-top: 15px; padding: 12px; border-radius: 10px;
             display: none; text-align: center; font-weight: 600; font-size: 0.9em;
         }
         .message.success { background-color: rgba(78, 204, 163, 0.1); color: #4ecca3; border: 1px solid rgba(78, 204, 163, 0.2); }
         .message.error { background-color: rgba(233, 69, 96, 0.1); color: #e94560; border: 1px solid rgba(233, 69, 96, 0.2); }
+        .message.warning { background-color: rgba(255, 215, 0, 0.1); color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.2); }
 
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
@@ -309,20 +310,31 @@
         let userPoints = parseInt(localStorage.getItem('balance')) || 1000;
         const token = localStorage.getItem('token');
         const username = localStorage.getItem('username');
+        // 🟡 Progressive KYC: Check if user is verified (will be set during login)
+        const isVerified = localStorage.getItem('isVerified') === 'true';
+
+        // 🔒 SECURITY FIRST: Prevent XSS by escaping HTML characters
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag]));
+        }
 
         function renderFighterPhoto(photo) {
             if (!photo) return '🥊';
             if (typeof photo === 'string' && (photo.startsWith('http://') || photo.startsWith('https://'))) {
-                return `<img src="${photo}" alt="Fighter Photo">`;
+                // 🔒 SECURITY FIRST: Ensure image URL is safe
+                return `<img src="${escapeHTML(photo)}" alt="Fighter Photo">`;
             }
-            return photo;
+            return escapeHTML(photo);
         }
 
         function initializeUserInterface() {
             const userInfoDiv = document.getElementById('userInfo');
             const authButtonsDiv = document.getElementById('authButtons');
             if (token && username) {
-                userInfoDiv.innerHTML = `Welcome, <span>${username}</span>!`;
+                userInfoDiv.innerHTML = `Welcome, <span>${escapeHTML(username)}</span>!`;
                 authButtonsDiv.innerHTML = `
                     <a href="/history.html" class="btn" style="margin-right: 8px; background: rgba(0, 191, 255, 0.15); color: #00bfff; border: 1px solid rgba(0, 191, 255, 0.3);">📜 History</a>
                     <a href="/leaderboard.html" class="btn" style="margin-right: 8px; background: rgba(255, 215, 0, 0.15); color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.3);">🏆 Leaderboard</a>
@@ -382,9 +394,7 @@
             container.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">⏳ Loading fights from database...</p>';
             try {
                 const response = await fetch('/api/fights');
-                if (!response.ok) {
-                    throw new Error(`Server returned ${response.status}`);
-                }
+                if (!response.ok) throw new Error(`Server returned ${response.status}`);
                 const fights = await response.json();
                 
                 if (Array.isArray(fights) && fights.length > 0) {
@@ -394,7 +404,7 @@
                 }
             } catch (error) {
                 console.error('Error loading fights:', error);
-                container.innerHTML = `<p style="text-align:center; color:#e94560; padding:20px;">⚠️ Failed to load fights. (Error: ${error.message})<br><small>Check console (F12) for details.</small></p>`;
+                container.innerHTML = `<p style="text-align:center; color:#e94560; padding:20px;">⚠️ Failed to load fights.<br><small>Check console (F12) for details.</small></p>`;
             }
         }
 
@@ -434,6 +444,7 @@
             const statusClass = fight.status === 'live' ? 'status-live' : 'status-upcoming';
             const statusText = fight.status === 'live' ? '🔴 LIVE' : '📅 UPCOMING';
 
+            // 🚀 HIGH TRAFFIC: Removed legacy fight.bets rendering to keep HTML lightweight and aligned with backend schema
             card.innerHTML = `
                 <div class="fight-header">
                     <span class="${statusClass}">${statusText}</span>
@@ -442,14 +453,14 @@
                 <div class="matchup-container">
                     <div class="fighter">
                         <div class="fighter-photo">${renderFighterPhoto(fight.fighter1.photo)}</div>
-                        <div class="fighter-name">${fight.fighter1.name}</div>
-                        <div class="fighter-record">${fight.fighter1.record}</div>
+                        <div class="fighter-name">${escapeHTML(fight.fighter1.name)}</div>
+                        <div class="fighter-record">${escapeHTML(fight.fighter1.record)}</div>
                     </div>
                     <div class="vs-badge">VS</div>
                     <div class="fighter">
                         <div class="fighter-photo">${renderFighterPhoto(fight.fighter2.photo)}</div>
-                        <div class="fighter-name">${fight.fighter2.name}</div>
-                        <div class="fighter-record">${fight.fighter2.record}</div>
+                        <div class="fighter-name">${escapeHTML(fight.fighter2.name)}</div>
+                        <div class="fighter-record">${escapeHTML(fight.fighter2.record)}</div>
                     </div>
                 </div>
                 <div class="prediction-section">
@@ -465,16 +476,10 @@
                         <input type="number" class="custom-prediction-input" placeholder="Custom amount" min="50" max="10000" value="100">
                     </div>
                     <div class="prediction-buttons">
-                        <button class="prediction-btn prediction-btn-fighter1">Predict ${fight.fighter1.name}</button>
-                        <button class="prediction-btn prediction-btn-fighter2">Predict ${fight.fighter2.name}</button>
+                        <button class="prediction-btn prediction-btn-fighter1">Predict ${escapeHTML(fight.fighter1.name)}</button>
+                        <button class="prediction-btn prediction-btn-fighter2">Predict ${escapeHTML(fight.fighter2.name)}</button>
                     </div>
                     <div class="message"></div>
-                    ${fight.bets && fight.bets.length > 0 ? `
-                        <div class="current-predictions">
-                            <strong style="color:#888; font-size:0.75em; display:block; margin-bottom:8px; text-transform:uppercase;">Current Predictions:</strong>
-                            ${fight.bets.map(pred => `<div class="prediction-item"><span>${pred.fighter}</span><span style="color:#ffd700; font-weight:700;">${pred.amount} pts</span></div>`).join('')}
-                        </div>
-                    ` : ''}
                 </div>
             `;
             return card;
@@ -495,10 +500,15 @@
             if (predictionAmount > 10000) { showMessage(messageDiv, 'error', '❌ Maximum prediction is 10,000 points!'); return; }
             if (userPoints < predictionAmount) { showMessage(messageDiv, 'error', '❌ Insufficient points!'); return; }
 
+            // 🟡 Progressive KYC: Warn user if trying to predict > 5000 points without verification
+            if (predictionAmount > 5000 && !isVerified) {
+                showMessage(messageDiv, 'warning', '⚠️ Predictions over 5,000 points require ID verification. Please go to your Profile to verify.');
+                return;
+            }
+
             showMessage(messageDiv, 'success', `⏳ Processing ${predictionAmount} points...`);
 
             try {
-                // 🔒 SECURITY FIRST: API route kept as /api/bets/create for backend compatibility
                 const response = await fetch('/api/bets/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -509,9 +519,8 @@
                     userPoints = data.newBalance || (userPoints - predictionAmount);
                     localStorage.setItem('balance', userPoints);
                     updateBalance();
-                    showMessage(messageDiv, 'success', `✅ Prediction placed on ${fighterName}!`);
+                    showMessage(messageDiv, 'success', `✅ Prediction placed on ${escapeHTML(fighterName)}!`);
                     
-                    // 🔒 SECURITY FIRST: Disable buttons immediately to prevent multiple predictions
                     predBtn1.disabled = true;
                     predBtn2.disabled = true;
                     predBtn1.innerText = 'Prediction Placed';
@@ -555,7 +564,7 @@
                 ads.forEach(ad => {
                     const link = document.createElement('a');
                     link.className = 'ad-banner';
-                    link.href = ad.targetUrl;
+                    link.href = escapeHTML(ad.targetUrl);
                     link.target = '_blank';
                     link.rel = 'noopener noreferrer';
                     
@@ -563,9 +572,9 @@
                     let mediaElement = '';
                     
                     if (ad.type === 'video') {
-                        mediaElement = `<video src="${mediaUrl}" autoplay muted loop playsinline></video>`;
+                        mediaElement = `<video src="${escapeHTML(mediaUrl)}" autoplay muted loop playsinline></video>`;
                     } else {
-                        mediaElement = `<img src="${mediaUrl}" alt="${ad.title}">`;
+                        mediaElement = `<img src="${escapeHTML(mediaUrl)}" alt="${escapeHTML(ad.title)}">`;
                     }
                     
                     link.innerHTML = `<span class="ad-label">Ad</span>${mediaElement}`;
