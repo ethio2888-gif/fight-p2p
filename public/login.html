@@ -5,11 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fight P2P - Premium Login & Register</title>
     
-    <!-- 🛡️ SECURITY FIRST: Google reCAPTCHA Script (Async defer ስለሆነ ገጹን አያዘገይም) -->
+    <!-- 🛡️ SECURITY FIRST: Google reCAPTCHA Script -->
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
     <style>
-        /* --- Modern Reset & Base --- */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         body {
@@ -23,7 +22,6 @@
             padding: 20px;
         }
 
-        /* --- Glassmorphism Container --- */
         .container {
             background: rgba(255, 255, 255, 0.03);
             backdrop-filter: blur(16px);
@@ -48,7 +46,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* --- Modern Inputs --- */
         input {
             width: 100%;
             padding: 14px 16px;
@@ -70,7 +67,6 @@
             background: rgba(0, 0, 0, 0.3);
         }
 
-        /* --- Modern Buttons --- */
         button {
             width: 100%;
             padding: 14px;
@@ -94,7 +90,6 @@
 
         button:active { transform: translateY(0); }
 
-        /* --- Toggle Link --- */
         .toggle-link {
             text-align: center;
             margin-top: 25px;
@@ -110,7 +105,6 @@
             text-decoration: underline;
         }
 
-        /* --- Result Messages --- */
         .result {
             margin-top: 20px;
             padding: 12px;
@@ -136,7 +130,6 @@
 
         .hidden { display: none; }
 
-        /* 🛡️ SECURITY FIRST: reCAPTCHA styling to match theme */
         .g-recaptcha {
             margin-top: 15px;
             display: flex;
@@ -148,7 +141,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* --- Responsive --- */
         @media (max-width: 480px) {
             .container { padding: 30px 20px; }
             h2 { font-size: 1.5em; }
@@ -158,23 +150,20 @@
 <body>
 
     <div class="container">
-        <!-- የምዝገባ ክፍል -->
         <div id="registerSection">
             <h2>🥊 አዲስ መለያ ይፍጠሩ</h2>
             <input type="text" id="regUsername" placeholder="የተጠቃሚ ስም (Username)" autocomplete="username">
             <input type="email" id="regEmail" placeholder="ኢሜይል (Email)" autocomplete="email">
             <input type="password" id="regPassword" placeholder="የይለፍ ቃል (Password)" autocomplete="new-password">
             
-            <!-- 🛡️ SECURITY FIRST: reCAPTCHA Widget -->
-            <!-- ⚠️ አስፈላጊ ማሳሰቢያ: YOUR_RECAPTCHA_SITE_KEY የሚለውን በእውነተኛው የ Google Site Key ይተኩ -->
-            <div class="g-recaptcha" data-sitekey="YOUR_RECAPTCHA_SITE_KEY"></div>
+            <!-- 🛡️ SECURITY FIRST: reCAPTCHA Widget with REAL Site Key -->
+            <div class="g-recaptcha" data-sitekey="6LcijyEuAAAAALNzqquXV5Q2T1-1WBgyFk3-k564"></div>
             
             <button onclick="register()">መዝገብ</button>
             <p class="toggle-link" onclick="showLogin()">ድሮ መለያ አለዎት? ይግቡ</p>
             <div id="regResult" class="result"></div>
         </div>
 
-        <!-- የመግቢያ ክፍል -->
         <div id="loginSection" class="hidden">
             <h2>👋 ወደ መለያዎ ይግቡ</h2>
             <input type="text" id="loginUsername" placeholder="የተጠቃሚ ስም (Username)" autocomplete="username">
@@ -186,9 +175,6 @@
     </div>
 
     <script>
-        // ==========================================
-        // 🔒 SECURITY FIRST: All logic preserved and enhanced
-        // ==========================================
         const API_URL = 'https://fight-p2p.onrender.com/api/auth';
 
         function showResult(elementId, message, isError) {
@@ -203,7 +189,6 @@
             const email = document.getElementById('regEmail').value.trim();
             const password = document.getElementById('regPassword').value;
             
-            // 🛡️ SECURITY FIRST: Check if reCAPTCHA is solved
             const recaptchaResponse = grecaptcha.getResponse();
             
             if (!username || !email || !password) {
@@ -218,7 +203,6 @@
                 const response = await fetch(`${API_URL}/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    // 🛡️ SECURITY FIRST: Send reCAPTCHA token to backend for verification
                     body: JSON.stringify({ 
                         username, 
                         email, 
@@ -230,11 +214,11 @@
                 
                 if (response.ok) {
                     showResult('regResult', '✅ በተሳካ ሁኔታ ተመዝግበዋል! አሁን ይግቡ።', false);
-                    grecaptcha.reset(); // Reset captcha after success
+                    grecaptcha.reset();
                     setTimeout(showLogin, 1500);
                 } else {
                     showResult('regResult', '❌ ' + (data.message || 'ስህተት ተፈጥሯል'), true);
-                    grecaptcha.reset(); // Reset captcha on error so user can try again
+                    grecaptcha.reset();
                 }
             } catch (error) {
                 showResult('regResult', '❌ ከሰርቨር ጋር መገናኘት አልተሳካም።', true);
@@ -259,12 +243,9 @@
                 const data = await response.json();
                 
                 if (response.ok) {
-                    // 🔒 Securely store essential data
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('username', data.username);
                     localStorage.setItem('balance', data.balance || 1000);
-                    
-                    // 🟡 Progressive KYC: Store verification status for index.html checks
                     localStorage.setItem('isVerified', data.isVerified === true);
                     
                     showResult('loginResult', `✅ በተሳካ ሁኔታ ገብተዋል! እየተመላለስን...`, false);
