@@ -3,15 +3,14 @@ const router = express.Router();
 const Bet = require('../models/Bet');
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
 
-// 🔒 SECURITY FIRST: JWT Secret MUST be loaded from Environment Variables (No fallback)
 const JWT_SECRET = process.env.JWT_SECRET;
 
 if (!JWT_SECRET) {
   console.error('⚠️ CRITICAL: JWT_SECRET is not defined in Environment Variables!');
 }
 
-// Middleware: JWT Token ማረጋገጫ
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   const token = authHeader && authHeader.split(' ')[1];
@@ -25,58 +24,56 @@ const authenticateToken = (req, res, next) => {
       return res.status(403).json({ message: 'Invalid token' });
     }
     req.userId = decoded.userId;
-    req.isAdmin = decoded.isAdmin || false; // 🔑 For future admin route protection
+    req.isAdmin = decoded.isAdmin || false;
     next();
   });
 };
 
-// 1. ክፍት ግምቶችን ማየት (Get Open Predictions)
+const betActionLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 10,
+  message: { message: 'በጣም ብዙ ጥያቄዎች። እባክዎ ትንሽ ይጠብቁ።' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 router.get('/open', async (req, res) => {
   try {
-    // 🚀 HIGH TRAFFIC: Limit results to prevent loading thousands of records
     const openBets = await Bet.find({ status: 'open' })
       .populate('creator', 'username balance')
       .populate('event')
       .sort({ createdAt: -1 })
-      .limit(100); 
-    
+      .limit(100);
     res.json(openBets);
   } catch (error) {
     res.status(500).json({ message: 'የሰርቨር ስህተት', error: error.message });
   }
 });
 
-// 2. የእኔን ግምቶች ማየት (Get My Predictions)
 router.get('/my-bets', authenticateToken, async (req, res) => {
   try {
     const myBets = await Bet.find({
-      $or: [
-        { creator: req.userId },
-        { acceptor: req.userId }
-      ]
+      $or: [{ creator: req.userId }, { acceptor: req.userId }]
     })
       .populate('creator', 'username')
       .populate('acceptor', 'username')
       .populate('event')
       .sort({ createdAt: -1 })
-      .limit(100); // 🚀 HIGH TRAFFIC: Limit results
-    
+      .limit(100);
     res.json(myBets);
   } catch (error) {
     res.status(500).json({ message: 'የሰርቨር ስህተት', error: error.message });
   }
 });
 
-// 3. ግምት መፍጠር (Create Prediction) - ተጫዋች A
-router.post('/create', authenticateToken, async (req, res) => {
+router.post('/create', authenticateToken, betActionLimiter, async (req, res) => {
   try {
     const { eventId, fighterChoice, amount } = req.body;
 
     if (!eventId || !fighterChoice || !amount) {
-      return res.status(400).json({ message: 'ሁሉም መረጃዎች ያስፈልጋሉ (eventId, fighterChoice እና amount)' });
+      return res.status(400).json({ message: 'ሁሉም መረጃዎች ያስፈልጋሉ' });
     }
 
-    // 🔒 SECURITY FIRST: ተጠቃሚው ለዚህ ፋይት (eventId) አስቀድሞ predict አድርጎ አለመሆኑን መፈተሽ
     const existingBet = await Bet.findOne({
       creator: req.userId,
       event: eventId,
@@ -84,9 +81,7 @@ router.post('/create', authenticateToken, async (req, res) => {
     });
 
     if (existingBet) {
-      return res.status(400).json({ 
-        message: 'ለዚህ ፋይት አስቀድመው ግምት (prediction) ሰጥተዋል! አንድ ተጫዋች ለአንድ ፋይት አንድ ጊዜ ብቻ መምረጥ ይችላል።' 
-      });
+      return res.status(400).json({ message: 'ለዚህ ፋይት አስቀድመው ግምት ሰጥተዋል!' });
     }
 
     const betAmount = Number(amount);
@@ -102,10 +97,14 @@ router.post('/create', authenticateToken, async (req, res) => {
     }
 
     if (!['red', 'blue'].includes(fighterChoice)) {
-      return res.status(400).json({ message: 'ትክክለኛ ያልሆነ የተዋጊ ምርጫ (red ወይም blue ብቻ)' });
+      return res.status(400).json({ message: 'ትክክለኛ ያልሆነ የተዋጊ ምርጫ' });
     }
 
-    // 🔒 SECURITY FIRST & HIGH TRAFFIC: Atomic balance deduction to prevent Race Conditions (Double Spending)
+    const userCheck = await User.findById(req.userId);
+    if (betAmount > 5000 && !userCheck.isVerified) {
+      return res.status(403).json({ message: 'ከ5,000 ፖይንት በላይ ለመጫወት መታወቂያዎን ማረጋገጥ (KYC) አለብዎት።' });
+    }
+
     const user = await User.findOneAndUpdate(
       { _id: req.userId, balance: { $gte: betAmount } },
       { $inc: { balance: -betAmount } },
@@ -138,8 +137,7 @@ router.post('/create', authenticateToken, async (req, res) => {
   }
 });
 
-// 4. ግምት መቀበል (Accept Prediction) - ተጫዋች B
-router.post('/accept/:betId', authenticateToken, async (req, res) => {
+router.post('/accept/:betId', authenticateToken, betActionLimiter, async (req, res) => {
   try {
     const bet = await Bet.findById(req.params.betId).populate('creator');
     
@@ -155,7 +153,6 @@ router.post('/accept/:betId', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'የራስዎን ግምት መቀበል አይችሉም' });
     }
 
-    // 🔒 SECURITY FIRST: ተቀባዩ ለዚህ ፋይት አስቀድሞ predict አድርጎ አለመሆኑን መፈተሽ
     const existingBet = await Bet.findOne({
       creator: req.userId,
       event: bet.event,
@@ -163,12 +160,14 @@ router.post('/accept/:betId', authenticateToken, async (req, res) => {
     });
 
     if (existingBet) {
-      return res.status(400).json({ 
-        message: 'ለዚህ ፋይት አስቀድመው ግምት (prediction) ሰጥተዋል! አንድ ተጫዋች ለአንድ ፋይት አንድ ጊዜ ብቻ መምረጥ ይችላል።' 
-      });
+      return res.status(400).json({ message: 'ለዚህ ፋይት አስቀድመው ግምት ሰጥተዋል!' });
     }
 
-    // 🔒 SECURITY FIRST & HIGH TRAFFIC: Atomic balance deduction
+    const userCheck = await User.findById(req.userId);
+    if (bet.amount > 5000 && !userCheck.isVerified) {
+      return res.status(403).json({ message: 'ከ5,000 ፖይንት በላይ ለመጫወት መታወቂያዎን ማረጋገጥ (KYC) አለብዎት።' });
+    }
+
     const user = await User.findOneAndUpdate(
       { _id: req.userId, balance: { $gte: bet.amount } },
       { $inc: { balance: -bet.amount } },
@@ -179,7 +178,6 @@ router.post('/accept/:betId', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'በቂ ሂሳብ የለዎትም' });
     }
 
-    // 🔒 SECURITY FIRST: Atomic bet matching (prevents two users from accepting the same bet simultaneously)
     const updatedBet = await Bet.findOneAndUpdate(
       { _id: req.params.betId, status: 'open', creator: { $ne: req.userId } },
       { status: 'matched', acceptor: req.userId, updatedAt: Date.now() },
@@ -187,7 +185,6 @@ router.post('/accept/:betId', authenticateToken, async (req, res) => {
     );
 
     if (!updatedBet) {
-      // Revert balance deduction since the bet could not be matched (Race condition protection)
       await User.findByIdAndUpdate(req.userId, { $inc: { balance: bet.amount } });
       return res.status(400).json({ message: 'ግምቱ አልተገኘም፣ ቀድሞ ተጣምሯል፣ ወይም የራስዎ ነው' });
     }
@@ -203,14 +200,17 @@ router.post('/accept/:betId', authenticateToken, async (req, res) => {
   }
 });
 
-// 5. ግምትን ማስተካከል/ማሸነፍ (Settle Prediction)
 router.post('/settle/:betId', authenticateToken, async (req, res) => {
   try {
+    if (!req.isAdmin) {
+      return res.status(403).json({ message: 'ይህንን ለማድረግ የአድሚን መብት ያስፈልጋል' });
+    }
+
     const { winningFighter } = req.body;
     const { betId } = req.params;
 
     if (!winningFighter || !['red', 'blue'].includes(winningFighter)) {
-      return res.status(400).json({ message: 'ትክክለኛ ያልሆነ አሸናፊ ምርጫ (red ወይም blue ብቻ)' });
+      return res.status(400).json({ message: 'ትክክለኛ ያልሆነ አሸናፊ ምርጫ' });
     }
 
     const bet = await Bet.findById(betId);
@@ -219,15 +219,14 @@ router.post('/settle/:betId', authenticateToken, async (req, res) => {
     }
 
     if (bet.status !== 'matched') {
-      return res.status(400).json({ message: 'ይህ ግምት ሊጣመር (matched) አልቻለም ወይም ቀድሞ ተፈትቷል' });
+      return res.status(400).json({ message: 'ይህ ግምት ሊጣመር አልቻለም ወይም ቀድሞ ተፈትቷል' });
     }
 
-    // Note: In a real app, this route should be protected by an isAdmin middleware.
     const settledBet = await Bet.settleBet(betId, winningFighter);
     const winner = await User.findById(settledBet.winner);
 
     res.json({
-      message: `ግምቱ በተሳካ ሁኔታ ተፈትቷል! አሸናፊው ፖይንቱን አግኝቷል።`,
+      message: 'ግምቱ በተሳካ ሁኔታ ተፈትቷል!',
       bet: settledBet,
       winnerNewBalance: winner.balance
     });
@@ -237,10 +236,8 @@ router.post('/settle/:betId', authenticateToken, async (req, res) => {
   }
 });
 
-// 6. ግምት መሰረዝ (Cancel Open Prediction) - ተጫዋች A
 router.post('/cancel/:betId', authenticateToken, async (req, res) => {
   try {
-    // 🔒 SECURITY FIRST & HIGH TRAFFIC: Atomic cancellation (ensures it's still 'open' and belongs to user)
     const updatedBet = await Bet.findOneAndUpdate(
       { _id: req.params.betId, creator: req.userId, status: 'open' },
       { status: 'cancelled', updatedAt: Date.now() },
@@ -251,7 +248,6 @@ router.post('/cancel/:betId', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'ይህንን ግምት የመሰረዝ መብት የለዎትም ወይም ቀድሞ ተጣምሯል/ተሰርዟል' });
     }
 
-    // 🔒 SECURITY FIRST: Atomic refund
     await User.findByIdAndUpdate(req.userId, { $inc: { balance: updatedBet.amount } });
 
     res.json({
