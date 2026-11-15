@@ -4,7 +4,8 @@ const eventSchema = new mongoose.Schema({
   title: {
     type: String,
     required: true,
-    trim: true
+    trim: true,
+    maxlength: 150 // 🔒 Security First: Prevents excessively long titles
   },
   organization: {
     type: mongoose.Schema.Types.ObjectId,
@@ -15,7 +16,9 @@ const eventSchema = new mongoose.Schema({
     {
       name: {
         type: String,
-        required: true
+        required: true,
+        trim: true,
+        maxlength: 50 // 🔒 Security First: Prevents long fighter names
       },
       corner: {
         type: String,
@@ -34,13 +37,16 @@ const eventSchema = new mongoose.Schema({
     default: 'upcoming'
   },
   winner: {
-    type: String,
+    type: String, // 'red', 'blue', or 'draw'
     default: null
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
   }
+  // ⏱️ Removed manual createdAt. Using timestamps: true below instead.
+}, { 
+  timestamps: true // Automatically manages createdAt and updatedAt
 });
+
+// 🚀 HIGH TRAFFIC: Add index for ultra-fast retrieval of events by status and date
+eventSchema.index({ status: 1, date: 1 });
+eventSchema.index({ organization: 1 });
 
 module.exports = mongoose.model('Event', eventSchema);
