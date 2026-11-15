@@ -264,6 +264,9 @@
                     localStorage.setItem('username', data.username);
                     localStorage.setItem('balance', data.balance || 1000);
                     
+                    // 🟡 Progressive KYC: Store verification status for index.html checks
+                    localStorage.setItem('isVerified', data.isVerified === true);
+                    
                     showResult('loginResult', `✅ በተሳካ ሁኔታ ገብተዋል! እየተመላለስን...`, false);
                     
                     setTimeout(() => {
