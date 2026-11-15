@@ -119,7 +119,6 @@
 
         .card-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.08); padding-bottom: 12px; }
         
-        /* 🔒 SECURITY FIRST: Renamed CSS classes from "bet" to "prediction" for UI cleanliness */
         .prediction-date { color: #888; font-size: 0.85em; font-weight: 500; }
         
         .status-badge { padding: 6px 14px; border-radius: 20px; font-size: 0.75em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -175,18 +174,16 @@
     </div>
 
     <script>
-        // ==========================================
-        // 🔒 SECURITY FIRST: All logic preserved exactly as before
-        // ==========================================
         const token = localStorage.getItem('token');
         const username = localStorage.getItem('username');
         let userPoints = parseInt(localStorage.getItem('balance')) || 0;
 
-        // 🔒 Security First: ተጠቃሚው ካልገባ ወደ login ይላክ
+        // 🔒 SECURITY FIRST: Redirect if not logged in
         if (!token || !username) {
             window.location.href = '/login.html';
         } else {
-            document.getElementById('userInfo').innerHTML = `Welcome, <span>${username}</span>! | Balance: <span>${userPoints}</span> Pts`;
+            // 🔒 SECURITY FIRST: Escape username to prevent XSS
+            document.getElementById('userInfo').innerHTML = `Welcome, <span>${escapeHTML(username)}</span>! | Balance: <span>${userPoints}</span> Pts`;
             document.getElementById('authButtons').innerHTML = `
                 <a href="/" class="btn btn-home" style="margin-right: 10px;">ዋና ገጽ</a>
                 <button class="btn btn-logout" onclick="logout()">Logout</button>
@@ -198,9 +195,16 @@
             window.location.href = '/login.html';
         }
 
+        // 🔒 SECURITY FIRST: Prevent XSS by escaping HTML characters
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag]));
+        }
+
         async function loadHistory() {
             try {
-                // 🔒 SECURITY FIRST: API endpoint remains '/api/bets/my-bets' to maintain backend compatibility
                 const response = await fetch('https://fight-p2p.onrender.com/api/bets/my-bets', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -232,10 +236,9 @@
                 card.className = 'history-card glass-panel';
                 card.id = `pred-card-${pred._id}`;
 
-                // Status mapping
                 let statusClass = 'status-open';
                 let statusText = 'Open (ክፍት)';
-                let winDisplay = `<div class="win-label">Potential Win</div><div class="win-amount">${pred.potentialWin} pts</div>`;
+                let winDisplay = `<div class="win-label">Potential Win</div><div class="win-amount">${escapeHTML(pred.potentialWin)} pts</div>`;
 
                 if (pred.status === 'matched') {
                     statusClass = 'status-matched';
@@ -243,36 +246,36 @@
                 } else if (pred.status === 'won') {
                     statusClass = 'status-won';
                     statusText = 'Won (አሸንፈሃል!)';
-                    winDisplay = `<div class="win-label">Won Amount</div><div class="win-amount">${pred.potentialWin} pts</div>`;
+                    winDisplay = `<div class="win-label">Won Amount</div><div class="win-amount">${escapeHTML(pred.potentialWin)} pts</div>`;
                 } else if (pred.status === 'lost') {
                     statusClass = 'status-lost';
                     statusText = 'Lost (ተሳነሃል)';
-                    winDisplay = `<div class="win-label">Lost</div><div class="win-amount" style="color: #e94560;">-${pred.amount} pts</div>`;
+                    winDisplay = `<div class="win-label">Lost</div><div class="win-amount" style="color: #e94560;">-${escapeHTML(pred.amount)} pts</div>`;
                 } else if (pred.status === 'cancelled') {
                     statusClass = 'status-cancelled';
                     statusText = 'Cancelled (ተሰርዟል)';
-                    winDisplay = `<div class="win-label">Refunded</div><div class="win-amount" style="color: #aaa;">${pred.amount} pts</div>`;
+                    winDisplay = `<div class="win-label">Refunded</div><div class="win-amount" style="color: #aaa;">${escapeHTML(pred.amount)} pts</div>`;
                 }
 
                 const date = new Date(pred.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
                 const choiceColor = pred.fighterChoice === 'red' ? '#ff0000' : '#ffd700';
                 
-                // ✅ Defense in Depth: Cancel button only visible to creator
                 const isCreator = pred.creator && pred.creator.username === username;
                 let cancelBtn = '';
                 if (pred.status === 'open' && isCreator) {
-                    cancelBtn = `<button class="btn btn-cancel" onclick="cancelPrediction('${pred._id}', this)">❌ Cancel & Refund</button>`;
+                    cancelBtn = `<button class="btn btn-cancel" onclick="cancelPrediction('${escapeHTML(pred._id)}', this)">❌ Cancel & Refund</button>`;
                 }
 
+                // 🔒 SECURITY FIRST: All dynamic content is escaped
                 card.innerHTML = `
                     <div class="card-header">
-                        <span class="prediction-date">📅 ${date}</span>
-                        <span class="status-badge ${statusClass}">${statusText}</span>
+                        <span class="prediction-date">📅 ${escapeHTML(date)}</span>
+                        <span class="status-badge ${statusClass}">${escapeHTML(statusText)}</span>
                     </div>
                     <div class="card-body">
                         <div class="prediction-details">
-                            <div class="prediction-choice">Prediction: <span style="color: ${choiceColor}">${pred.fighterChoice.toUpperCase()}</span></div>
-                            <div class="prediction-amount">Points: ${pred.amount}</div>
+                            <div class="prediction-choice">Prediction: <span style="color: ${choiceColor}">${escapeHTML(pred.fighterChoice).toUpperCase()}</span></div>
+                            <div class="prediction-amount">Points: ${escapeHTML(pred.amount)}</div>
                         </div>
                         <div class="potential-win">
                             ${winDisplay}
@@ -284,7 +287,6 @@
             });
         }
 
-        // ✅ Updated: Cancel prediction function
         async function cancelPrediction(predId, btnElement) {
             if (!confirm('Are you sure you want to cancel this prediction and refund your points?')) {
                 return;
@@ -295,7 +297,6 @@
             btnElement.innerText = '⏳ Canceling...';
 
             try {
-                // 🔒 SECURITY FIRST: API endpoint remains '/api/bets/cancel' to maintain backend compatibility
                 const response = await fetch(`https://fight-p2p.onrender.com/api/bets/cancel/${predId}`, {
                     method: 'POST',
                     headers: {
@@ -307,15 +308,12 @@
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Update local balance
                     userPoints = data.newBalance;
                     localStorage.setItem('balance', userPoints);
                     
-                    // Update UI balance
                     const userInfoDiv = document.getElementById('userInfo');
-                    userInfoDiv.innerHTML = `Welcome, <span>${username}</span>! | Balance: <span>${userPoints}</span> Pts`;
+                    userInfoDiv.innerHTML = `Welcome, <span>${escapeHTML(username)}</span>! | Balance: <span>${userPoints}</span> Pts`;
 
-                    // Update card UI
                     const card = btnElement.closest('.history-card');
                     card.style.opacity = '0.6';
                     btnElement.innerText = '✅ Cancelled & Refunded';
@@ -323,7 +321,6 @@
                     btnElement.style.color = '#000';
                     btnElement.style.boxShadow = 'none';
                     
-                    // Remove card after short delay
                     setTimeout(() => {
                         card.remove();
                         const container = document.getElementById('history-container');
