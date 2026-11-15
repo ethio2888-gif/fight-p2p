@@ -1,10 +1,11 @@
 {
   "name": "fight-p2p",
   "version": "1.0.0",
-  "description": "Fight P2P betting platform",
+  "description": "Fight P2P prediction platform - Secure and Scalable",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "nodemon server.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
@@ -12,9 +13,13 @@
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.0.3",
     "multer": "^1.4.5-lts.1",
     "socket.io": "^4.6.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   }
 }
