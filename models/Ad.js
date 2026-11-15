@@ -9,14 +9,14 @@ const adSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['image', 'video'], // ✅ አዲስ: ምስል ወይም ቪዲዮ መሆኑን ይለያል
+    enum: ['image', 'video'], 
     default: 'image',
     required: true
   },
   mediaUrl: { 
     type: String, 
     required: true, 
-    trim: true // ✅ አዲስ: የምስል ወይም የቪዲዮ ሊንክ
+    trim: true 
   },
   targetUrl: { 
     type: String, 
@@ -39,5 +39,9 @@ const adSchema = new mongoose.Schema({
     ref: 'User' 
   }
 }, { timestamps: true });
+
+// 🚀 HIGH TRAFFIC: Add index for ultra-fast retrieval of active ads
+// This ensures fetching active ads takes milliseconds, even with thousands of records.
+adSchema.index({ isActive: 1, endDate: 1 });
 
 module.exports = mongoose.model('Ad', adSchema);
