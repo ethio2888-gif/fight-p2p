@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>የእኔ ፕሮፋይል | Fight P2P</title>
+  <style>
+    :root {
+      --primary: #e50914;
+      --bg-dark: #0f0f13;
+      --glass: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --text: #ffffff;
+      --text-muted: #a0a0a0;
+      --success: #00c853;
+      --warning: #ffd600;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 500px;
+      margin-top: 40px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      color: var(--primary);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .profile-card {
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+      border-radius: 16px;
+      padding: 30px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .avatar {
+      width: 80px;
+      height: 80px;
+      background: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: bold;
+      margin: 0 auto 20px;
+      border: 3px solid var(--glass-border);
+    }
+
+    .info-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .info-row:last-child { border-bottom: none; }
+
+    .info-label {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .info-value {
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    .balance { color: var(--success); }
+    .verified { color: var(--success); }
+    .unverified { color: var(--warning); }
+
+    .edit-section {
+      margin-top: 25px;
+      padding-top: 20px;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+    }
+
+    .input-group label {
+      display: block;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    .input-group input:focus {
+      border-color: var(--primary);
+    }
+
+    .btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-bottom: 10px;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover { background: #ff1a25; }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      color: var(--text-muted);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--text);
+      color: var(--text);
+    }
+
+    .message {
+      text-align: center;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+      display: none;
+      font-size: 0.9rem;
+    }
+
+    .message.success { background: rgba(0, 200, 83, 0.2); color: var(--success); display: block; }
+    .message.error { background: rgba(229, 9, 20, 0.2); color: var(--primary); display: block; }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="header">
+      <h1>🥊 የእኔ ፕሮፋይል</h1>
+    </div>
+
+    <div id="loading" class="loading">መረጃ እየተጫነ ነው...</div>
+
+    <div id="profileContent" class="profile-card" style="display: none;">
+      <div class="avatar" id="userAvatar">U</div>
+      
+      <div id="messageBox" class="message"></div>
+
+      <div class="info-row">
+        <span class="info-label">ተጠቃሚ ስም</span>
+        <span class="info-value" id="displayUsername">---</span>
+      </div>
+
+      <div class="info-row">
+        <span class="info-label">ቀሪ ሂሳብ</span>
+        <span class="info-value balance" id="displayBalance">0 ፖይንት</span>
+      </div>
+
+      <div class="info-row">
+        <span class="info-label">የማረጋገጫ ሁኔታ (KYC)</span>
+        <span class="info-value" id="displayVerified">---</span>
+      </div>
+
+      <div class="info-row">
+        <span class="info-label">የተቀላቀሉበት ቀን</span>
+        <span class="info-value" id="displayJoined">---</span>
+      </div>
+
+      <div class="edit-section">
+        <div class="input-group">
+          <label for="newUsername">አዲስ ስም ያስገቡ (ቢያንስ 3 ፊደል)</label>
+          <input type="text" id="newUsername" placeholder="አዲስ ስም...">
+        </div>
+        <button class="btn btn-primary" onclick="updateProfile()">ስም አዘምን</button>
+        <button class="btn btn-secondary" onclick="logout()">ዉጣ (Logout)</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = window.location.origin; // ወይም https://fight-p2p.onrender.com
+
+    // ገጹ ሲጫን መረጃውን አምጣ
+    document.addEventListener('DOMContentLoaded', loadProfile);
+
+    async function loadProfile() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/users/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem('token');
+          window.location.href = '/login.html';
+          return;
+        }
+
+        const data = await response.json();
+        
+        if (response.ok) {
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('profileContent').style.display = 'block';
+          
+          document.getElementById('displayUsername').textContent = data.username;
+          document.getElementById('userAvatar').textContent = data.username.charAt(0).toUpperCase();
+          document.getElementById('displayBalance').textContent = `${data.balance} ፖይንት`;
+          
+          const verifiedEl = document.getElementById('displayVerified');
+          if (data.isVerified) {
+            verifiedEl.textContent = '✅ የተረጋገጠ';
+            verifiedEl.className = 'info-value verified';
+          } else {
+            verifiedEl.textContent = '⚠️ አልተረጋገጠም';
+            verifiedEl.className = 'info-value unverified';
+          }
+
+          const date = new Date(data.createdAt);
+          document.getElementById('displayJoined').textContent = date.toLocaleDateString('am-ET', { year: 'numeric', month: 'long', day: 'numeric' });
+        } else {
+          showMessage(data.message || 'ስህተት ተፈጥሯል', 'error');
+        }
+      } catch (error) {
+        console.error('Profile load error:', error);
+        showMessage('የኔትወርክ ስህተት', 'error');
+      }
+    }
+
+    async function updateProfile() {
+      const newUsername = document.getElementById('newUsername').value.trim();
+      const token = localStorage.getItem('token');
+
+      if (!newUsername) {
+        showMessage('እባክህ አዲስ ስም አስገባ', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/api/users/me`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ username: newUsername })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          showMessage('ፕሮፋይል በተሳካ ሁኔታ ተዘምኗል!', 'success');
+          document.getElementById('newUsername').value = '';
+          setTimeout(() => loadProfile(), 1000); // ገጹን አድስ
+        } else {
+          showMessage(data.message || 'ስም ማዘመን አልተሳካም', 'error');
+        }
+      } catch (error) {
+        console.error('Update error:', error);
+        showMessage('የኔትወርክ ስህተት', 'error');
+      }
+    }
+
+    function showMessage(text, type) {
+      const msgBox = document.getElementById('messageBox');
+      msgBox.textContent = text;
+      msgBox.className = `message ${type}`;
+      setTimeout(() => {
+        msgBox.className = 'message';
+        msgBox.textContent = '';
+      }, 4000);
+    }
+
+    function logout() {
+      localStorage.removeItem('token');
+      window.location.href = '/login.html';
+    }
+  </script>
+</body>
+</html>
