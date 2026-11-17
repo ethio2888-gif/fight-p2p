@@ -43,6 +43,7 @@ const leaderboardRoutes = require('./routes/leaderboard');
 const dailyBonusRoutes = require('./routes/dailyBonus');
 const fightRoutes = require('./routes/fights');
 const uploadRoutes = require('./routes/upload');
+const userRoutes = require('./routes/users'); // 🆕 የተጠቃሚ ፕሮፋይል ራውት
 
 // 🔒 SECURITY FIRST: Import admin middleware to protect uploads
 const { requireAdmin } = require('./middleware/adminMiddleware');
@@ -54,9 +55,15 @@ app.use('/api/ads', adRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/daily-bonus', dailyBonusRoutes);
 app.use('/api/fights', fightRoutes);
+app.use('/api/users', userRoutes); // 🆕 የተጠቃሚ ፕሮፋይል ራውት
 
 // 🔒 SECURITY FIRST: Protect upload route so ONLY Admins can upload images (prevents Cloudinary quota abuse)
 app.use('/api/upload', requireAdmin, uploadRoutes); 
+
+// 🩺 Health Check Endpoint (ለ Render ጤና ማረጋገጫ)
+app.get('/health', (req, res) => {
+  res.status(200).json({ status: 'OK', message: 'Fight P2P Server is running smoothly!' });
+});
 
 // Legacy code for Socket.io (kept as is)
 let legacyFights = [
@@ -69,12 +76,6 @@ let legacyFights = [
     bets: []
   }
 ];
-
-let users = [];
-
-app.get('/api/users', (req, res) => {
-  res.json(users);
-});
 
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
