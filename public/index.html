@@ -40,7 +40,14 @@
             gap: 10px;
         }
         .user-info { font-size: 1em; font-weight: 600; color: #ffffff; }
-        .user-info span { color: #4ecca3; font-weight: 700; }
+        .user-info a {
+            color: #4ecca3;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+        .user-info a:hover { color: #ffd700; text-decoration: underline; }
         .btn {
             padding: 10px 18px;
             border: none;
@@ -334,8 +341,10 @@
             const userInfoDiv = document.getElementById('userInfo');
             const authButtonsDiv = document.getElementById('authButtons');
             if (token && username) {
-                userInfoDiv.innerHTML = `Welcome, <span>${escapeHTML(username)}</span>!`;
+                // 🆕 ስሙ ላይ ጠቅ አድርጎ ወደ ፕሮፋይል እንዲሄድ አድርጌያለሁ
+                userInfoDiv.innerHTML = `Welcome, <a href="/profile.html" title="Go to my profile">${escapeHTML(username)}</a>!`;
                 authButtonsDiv.innerHTML = `
+                    <a href="/profile.html" class="btn" style="margin-right: 8px; background: linear-gradient(135deg, #e94560 0%, #c73650 100%); color: white; border: 1px solid rgba(233, 69, 96, 0.3);">👤 Profile</a>
                     <a href="/history.html" class="btn" style="margin-right: 8px; background: rgba(0, 191, 255, 0.15); color: #00bfff; border: 1px solid rgba(0, 191, 255, 0.3);">📜 History</a>
                     <a href="/leaderboard.html" class="btn" style="margin-right: 8px; background: rgba(255, 215, 0, 0.15); color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.3);">🏆 Leaderboard</a>
                     <a href="/predictions.html" class="btn" style="margin-right: 8px; background: rgba(78, 204, 163, 0.15); color: #4ecca3; border: 1px solid rgba(78, 204, 163, 0.3);">Open Predictions</a>
