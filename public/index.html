@@ -18,6 +18,7 @@
             color: #e0e0e0;
             min-height: 100vh;
             padding: 15px;
+            padding-bottom: 80px;
             line-height: 1.6;
         }
         .container { max-width: 900px; margin: 0 auto; }
@@ -29,17 +30,17 @@
             border-radius: 20px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
-        .user-bar {
-            padding: 16px 20px;
-            margin-bottom: 25px;
+        
+        /* 🆕 ቀላል የላይኛው ክፍል */
+        .top-bar {
+            padding: 12px 16px;
+            margin-bottom: 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-left: 4px solid #e94560;
-            flex-wrap: wrap;
-            gap: 10px;
         }
-        .user-info { font-size: 1em; font-weight: 600; color: #ffffff; }
+        .user-info { font-size: 0.95em; font-weight: 600; color: #ffffff; }
         .user-info a {
             color: #4ecca3;
             font-weight: 700;
@@ -47,23 +48,18 @@
             cursor: pointer;
             transition: color 0.3s;
         }
-        .user-info a:hover { color: #ffd700; text-decoration: underline; }
-        .btn {
-            padding: 10px 18px;
-            border: none;
-            border-radius: 10px;
+        .user-info a:hover { color: #ffd700; }
+        .btn-logout {
+            padding: 8px 14px;
+            background: rgba(233, 69, 96, 0.15);
+            color: #e94560;
+            border: 1px solid rgba(233, 69, 96, 0.3);
+            border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 0.85em;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.3s ease;
+            font-size: 0.8em;
+            transition: all 0.3s;
         }
-        .btn:hover { transform: translateY(-2px); }
-        .btn-login { background: linear-gradient(135deg, #4ecca3 0%, #3fa890 100%); color: #0a0a12; }
-        .btn-logout { background: rgba(233, 69, 96, 0.15); color: #e94560; border: 1px solid rgba(233, 69, 96, 0.3); }
         .btn-logout:hover { background: #e94560; color: white; }
 
         header { text-align: center; padding: 20px 0 30px; }
@@ -77,16 +73,6 @@
             margin-bottom: 5px;
         }
         .tagline { color: #888; font-size: 1em; }
-
-        .user-balance {
-            text-align: center;
-            padding: 25px;
-            margin-bottom: 25px;
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.08) 0%, rgba(255, 140, 0, 0.02) 100%);
-            border: 1px solid rgba(255, 215, 0, 0.15);
-        }
-        .user-balance > div:first-child { font-size: 0.8em; text-transform: uppercase; letter-spacing: 2px; color: #ffd700; margin-bottom: 8px; font-weight: 600; }
-        .balance-amount { font-family: 'Montserrat', sans-serif; font-size: 2.5em; font-weight: 800; color: #ffffff; }
 
         .daily-bonus-container {
             text-align: center;
@@ -257,6 +243,42 @@
 
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
+        /* 🆕 Bottom Navigation Bar */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 10, 18, 0.95);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 0;
+            z-index: 1000;
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: #888;
+            font-size: 0.75em;
+            font-weight: 600;
+            transition: all 0.3s;
+            padding: 8px 12px;
+        }
+        .nav-item:hover, .nav-item.active {
+            color: #ffd700;
+            transform: translateY(-2px);
+        }
+        .nav-icon {
+            font-size: 1.5em;
+            margin-bottom: 4px;
+        }
+
         footer { text-align: center; padding: 30px 20px; border-top: 1px solid rgba(255, 255, 255, 0.05); margin-top: 30px; color: #555; font-size: 0.8em; }
         .footer-links { margin-top: 15px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
         .footer-links a { color: #888; text-decoration: none; margin: 0 8px; transition: color 0.3s; }
@@ -268,26 +290,21 @@
             .fighter-name { font-size: 0.95em; }
             .vs-badge { font-size: 1em !important; padding: 6px 12px !important; margin: 0 5px !important; }
             .prediction-buttons { flex-direction: column; }
-            .user-bar { flex-direction: column; text-align: center; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="user-bar glass-panel" id="userBar">
+        <!-- 🆕 ቀላል የላይኛው ክፍል -->
+        <div class="top-bar glass-panel" id="topBar">
             <div class="user-info" id="userInfo"></div>
-            <div id="authButtons"></div>
+            <button class="btn-logout" id="logoutBtn" style="display: none;" onclick="logout()">Logout</button>
         </div>
 
         <header>
             <h1>🥊 Fight P2P</h1>
             <p class="tagline">Premium Peer-to-Peer Boxing Match Predictions</p>
         </header>
-
-        <div class="user-balance glass-panel">
-            <div>Your Balance</div>
-            <div class="balance-amount" id="balanceAmount">1,000 Points</div>
-        </div>
 
         <div id="daily-bonus-container" class="daily-bonus-container" style="display: none;">
             <button id="claimBonusBtn" class="btn bonus-btn">🎁 Claim Daily Bonus (+50 Points)</button>
@@ -313,14 +330,32 @@
         </footer>
     </div>
 
+    <!-- 🆕 Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item active">
+            <span class="nav-icon">🏠</span>
+            <span>Home</span>
+        </a>
+        <a href="/predictions.html" class="nav-item">
+            <span class="nav-icon">🥊</span>
+            <span>Fights</span>
+        </a>
+        <a href="/leaderboard.html" class="nav-item">
+            <span class="nav-icon">🏆</span>
+            <span>Leaderboard</span>
+        </a>
+        <a href="/profile.html" class="nav-item">
+            <span class="nav-icon">👤</span>
+            <span>Profile</span>
+        </a>
+    </nav>
+
     <script>
         let userPoints = parseInt(localStorage.getItem('balance')) || 1000;
         const token = localStorage.getItem('token');
         const username = localStorage.getItem('username');
-        // 🟡 Progressive KYC: Check if user is verified (will be set during login)
         const isVerified = localStorage.getItem('isVerified') === 'true';
 
-        // 🔒 SECURITY FIRST: Prevent XSS by escaping HTML characters
         function escapeHTML(str) {
             if (str === null || str === undefined) return '';
             return String(str).replace(/[&<>'"]/g, tag => ({
@@ -331,30 +366,23 @@
         function renderFighterPhoto(photo) {
             if (!photo) return '🥊';
             if (typeof photo === 'string' && (photo.startsWith('http://') || photo.startsWith('https://'))) {
-                // 🔒 SECURITY FIRST: Ensure image URL is safe
                 return `<img src="${escapeHTML(photo)}" alt="Fighter Photo">`;
             }
             return escapeHTML(photo);
         }
 
+        // 🆕 ቀላል የላይኛው ክፍል
         function initializeUserInterface() {
             const userInfoDiv = document.getElementById('userInfo');
-            const authButtonsDiv = document.getElementById('authButtons');
+            const logoutBtn = document.getElementById('logoutBtn');
+            
             if (token && username) {
-                // 🆕 ስሙ ላይ ጠቅ አድርጎ ወደ ፕሮፋይል እንዲሄድ አድርጌያለሁ
-                userInfoDiv.innerHTML = `Welcome, <a href="/profile.html" title="Go to my profile">${escapeHTML(username)}</a>!`;
-                authButtonsDiv.innerHTML = `
-                    <a href="/profile.html" class="btn" style="margin-right: 8px; background: linear-gradient(135deg, #e94560 0%, #c73650 100%); color: white; border: 1px solid rgba(233, 69, 96, 0.3);">👤 Profile</a>
-                    <a href="/history.html" class="btn" style="margin-right: 8px; background: rgba(0, 191, 255, 0.15); color: #00bfff; border: 1px solid rgba(0, 191, 255, 0.3);">📜 History</a>
-                    <a href="/leaderboard.html" class="btn" style="margin-right: 8px; background: rgba(255, 215, 0, 0.15); color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.3);">🏆 Leaderboard</a>
-                    <a href="/predictions.html" class="btn" style="margin-right: 8px; background: rgba(78, 204, 163, 0.15); color: #4ecca3; border: 1px solid rgba(78, 204, 163, 0.3);">Open Predictions</a>
-                    <button class="btn btn-logout" onclick="logout()">Logout</button>
-                `;
-                updateBalance();
+                userInfoDiv.innerHTML = `Welcome, <a href="/profile.html">${escapeHTML(username)}</a>!`;
+                logoutBtn.style.display = 'block';
                 checkDailyBonusStatus();
             } else {
                 userInfoDiv.innerHTML = `Welcome, Guest!`;
-                authButtonsDiv.innerHTML = `<a href="/login.html" class="btn btn-login">Login / Register</a>`;
+                logoutBtn.style.display = 'none';
                 disableAllPredictionButtons();
             }
         }
@@ -453,7 +481,6 @@
             const statusClass = fight.status === 'live' ? 'status-live' : 'status-upcoming';
             const statusText = fight.status === 'live' ? '🔴 LIVE' : '📅 UPCOMING';
 
-            // 🚀 HIGH TRAFFIC: Removed legacy fight.bets rendering to keep HTML lightweight and aligned with backend schema
             card.innerHTML = `
                 <div class="fight-header">
                     <span class="${statusClass}">${statusText}</span>
@@ -509,7 +536,6 @@
             if (predictionAmount > 10000) { showMessage(messageDiv, 'error', '❌ Maximum prediction is 10,000 points!'); return; }
             if (userPoints < predictionAmount) { showMessage(messageDiv, 'error', '❌ Insufficient points!'); return; }
 
-            // 🟡 Progressive KYC: Warn user if trying to predict > 5000 points without verification
             if (predictionAmount > 5000 && !isVerified) {
                 showMessage(messageDiv, 'warning', '⚠️ Predictions over 5,000 points require ID verification. Please go to your Profile to verify.');
                 return;
@@ -527,7 +553,6 @@
                 if (response.ok) {
                     userPoints = data.newBalance || (userPoints - predictionAmount);
                     localStorage.setItem('balance', userPoints);
-                    updateBalance();
                     showMessage(messageDiv, 'success', `✅ Prediction placed on ${escapeHTML(fighterName)}!`);
                     
                     predBtn1.disabled = true;
@@ -555,11 +580,6 @@
             element.innerText = text;
             element.style.display = 'block';
             setTimeout(() => { element.style.display = 'none'; }, 4000);
-        }
-
-        function updateBalance() {
-            const el = document.getElementById('balanceAmount');
-            if (el) el.textContent = userPoints.toLocaleString() + ' Points';
         }
 
         async function loadAds() {
@@ -610,7 +630,6 @@
                         if (response.ok) {
                             userPoints = data.newBalance;
                             localStorage.setItem('balance', userPoints);
-                            updateBalance();
                             claimBtn.innerText = '🎁 Bonus Claimed';
                             document.getElementById('bonusMessage').innerText = `✅ ${data.message}`;
                             document.getElementById('bonusMessage').style.color = '#4ecca3';
