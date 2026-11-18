@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Fight = require('../models/Fight');
 const Bet = require('../models/Bet');
-const User = require('../models/User'); // 🔒 Added for refund logic
+const User = require('../models/User');
 const { requireAdmin } = require('../middleware/adminMiddleware');
 
 // 🔒 SECURITY FIRST: የግቤት መረጃ ማረጋገጫ እና ማጽዳት (Input Validation & Sanitization)
@@ -32,11 +32,12 @@ const validateFightInput = (data) => {
 // 1. PUBLIC: ሁሉንም ፋይቶች ማግኘት (ለፊት-ኤንድ ማሳያ)
 router.get('/', async (req, res) => {
   try {
-    // 🚀 HIGH TRAFFIC: Limit results to prevent loading thousands of records
+    // 🚀 HIGH TRAFFIC: Limit results & 🆕 Populate organization name for easy display
     const fights = await Fight.find()
+      .populate('organization', 'name') // 🆕 ይህ የድርጅቱን ስም ከ ID ጋር አያይዞ ያመጣል
       .sort({ date: 1 })
-      .limit(50) 
-      .select('-bets'); // Exclude bets array if it exists in schema to reduce payload size
+      .limit(100) 
+      .select('-bets');
     
     res.json(fights);
   } catch (error) {
@@ -47,9 +48,10 @@ router.get('/', async (req, res) => {
 // 2. ADMIN ONLY: አዲስ ፋይት መጨመር
 router.post('/', requireAdmin, async (req, res) => {
   try {
-    const { fighter1, fighter2, date, status } = req.body;
+    // 🆕 organization ን ከ req.body እናነባለን
+    const { fighter1, fighter2, date, status, organization } = req.body;
     
-    // Sanitize inputs (remove leading/trailing spaces)
+    // Sanitize inputs
     const cleanFighter1 = { ...fighter1, name: fighter1.name.trim() };
     const cleanFighter2 = { ...fighter2, name: fighter2.name.trim() };
 
@@ -63,6 +65,7 @@ router.post('/', requireAdmin, async (req, res) => {
       fighter2: cleanFighter2,
       date,
       status: status || 'upcoming',
+      organization: organization || null, // 🆕 የድርጅት መለያውን እዚህ እናስቀምጣለን
       addedBy: req.userId
     });
 
@@ -76,7 +79,8 @@ router.post('/', requireAdmin, async (req, res) => {
 // 3. ADMIN ONLY: ፋይት ማስተካከል (Update)
 router.put('/:id', requireAdmin, async (req, res) => {
   try {
-    const { fighter1, fighter2, date, status, winner } = req.body;
+    // 🆕 organization ን ከ req.body እናነባለን
+    const { fighter1, fighter2, date, status, winner, organization } = req.body;
     const updateData = {};
     
     if (fighter1) updateData.fighter1 = { ...fighter1, name: fighter1.name.trim() };
@@ -89,6 +93,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
     }
     if (status) updateData.status = status;
     if (winner) updateData.winner = winner;
+    if (organization !== undefined) updateData.organization = organization; // 🆕 የድርጅት መለያውን እናዘምናለን
 
     const fight = await Fight.findByIdAndUpdate(req.params.id, updateData, { new: true });
 
@@ -105,7 +110,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
 // 4. ADMIN ONLY: ፋይት መሰረዝ (Delete)
 router.delete('/:id', requireAdmin, async (req, res) => {
   try {
-    // 🔒 SECURITY FIRST: Prevent deletion if there are active bets to avoid orphaned data and financial loss
+    // 🔒 SECURITY FIRST: Prevent deletion if there are active bets
     const activeBetsCount = await Bet.countDocuments({ 
       event: req.params.id, 
       status: { $in: ['open', 'matched'] } 
@@ -130,7 +135,7 @@ router.delete('/:id', requireAdmin, async (req, res) => {
 // 5. ADMIN ONLY: አሸናፊ መምረጥ፣ ክፍያ ማከፋፈል፣ ክፍት ግምቶችን መመለስ እና ፋይቱን በራስ-ሰር መሰረዝ
 router.post('/:id/declare-winner', requireAdmin, async (req, res) => {
   try {
-    const { winner, winnerName } = req.body; // winner: 'red' or 'blue'
+    const { winner, winnerName } = req.body;
     const fightId = req.params.id;
 
     const fight = await Fight.findById(fightId);
@@ -138,7 +143,6 @@ router.post('/:id/declare-winner', requireAdmin, async (req, res) => {
       return res.status(404).json({ message: 'ፋይት አልተገኘም' });
     }
 
-    // ✅ Security: አሸናፊው ቀድሞ ተመርጧል ወይ? (Double Payout መከላከያ)
     if (fight.winner === winner) {
       return res.status(400).json({ 
         message: `አሸናፊው (${winnerName}) አስቀድሞ ተመርጧል። ግምቶች አንድ ጊዜ ብቻ ይከፈላሉ።` 
@@ -164,9 +168,7 @@ router.post('/:id/declare-winner', requireAdmin, async (req, res) => {
 
     for (const bet of openBets) {
       try {
-        // Refund the creator atomically
         await User.findByIdAndUpdate(bet.creator, { $inc: { balance: bet.amount } });
-        // Mark bet as cancelled
         await Bet.findByIdAndUpdate(bet._id, { status: 'cancelled', updatedAt: Date.now() });
         refundedCount++;
       } catch (err) {
@@ -174,7 +176,7 @@ router.post('/:id/declare-winner', requireAdmin, async (req, res) => {
       }
     }
 
-    // ✅ 3. AUTO-DELETE: አሸናፊ ከተመረጠና ክፍያ/መመለስ ከተከናወነ በኋላ ፋይቱን ከዳታቤዝ ሰርዝ
+    // ✅ 3. AUTO-DELETE
     await Fight.findByIdAndDelete(fightId);
 
     res.json({ 
