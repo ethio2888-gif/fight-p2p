@@ -7,11 +7,32 @@
     <style>
         body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%); color: #ffffff; min-height: 100vh; padding: 20px; }
         .container { max-width: 800px; margin: 0 auto; }
+        
+        /* 🆕 ቀላል እና ጽዳት ያለው የመመለሻ ቀስት (Back Arrow) */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(-4px);
+        }
+
         .user-bar { background: linear-gradient(135deg, #16213e 0%, #0f3460 100%); padding: 15px 25px; border-radius: 10px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; border: 2px solid #e94560; flex-wrap: wrap; gap: 10px; }
         .user-info { font-size: 1.1em; font-weight: bold; }
         .user-info span { color: #4ecca3; font-weight: bold; }
         .btn { padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9em; text-decoration: none; display: inline-block; transition: all 0.3s; }
-        .btn-home { background: linear-gradient(135deg, #4ecca3 0%, #3fa890 100%); color: #0f0f1a; }
         .btn-logout { background: linear-gradient(135deg, #e94560 0%, #c73650 100%); color: white; }
         .btn-accept { background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: black; width: 100%; margin-top: 10px; font-size: 1.1em; }
         .btn-accept:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(255, 215, 0, 0.4); }
@@ -34,6 +55,9 @@
 </head>
 <body>
     <div class="container">
+        <!-- 🆕 ቀላል የመመለሻ ቀስት (ወደ ዋና ገጽ ይመልሳል) -->
+        <a href="/" class="back-btn" aria-label="Back to Home">←</a>
+
         <div class="user-bar">
             <div class="user-info" id="userInfo">Loading...</div>
             <div id="authButtons"></div>
@@ -60,7 +84,6 @@
             // 🔒 SECURITY FIRST: Escape username to prevent XSS
             document.getElementById('userInfo').innerHTML = `Welcome, <span>${escapeHTML(username)}</span>! | Balance: <span>${userPoints}</span> Points`;
             document.getElementById('authButtons').innerHTML = `
-                <a href="/" class="btn btn-home" style="margin-right: 10px;">ዋና ገጽ</a>
                 <button class="btn btn-logout" onclick="logout()">Logout</button>
             `;
         }
@@ -80,7 +103,8 @@
 
         async function loadOpenPredictions() {
             try {
-                const response = await fetch('https://fight-p2p.onrender.com/api/bets/open');
+                // 🚀 HIGH TRAFFIC: Relative URL ስለሆነ በማንኛውም ዶሜይን (Localhost/Production) ይሰራል
+                const response = await fetch('/api/bets/open');
                 const predictions = await response.json();
                 displayPredictions(predictions);
             } catch (error) {
@@ -138,7 +162,7 @@
             showMessage(messageDiv, 'success', '⏳ ግምቱን እየቀበልን ነው...');
 
             try {
-                const response = await fetch(`https://fight-p2p.onrender.com/api/bets/accept/${predId}`, {
+                const response = await fetch(`/api/bets/accept/${predId}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -175,7 +199,7 @@
 
         function showMessage(element, type, text) {
             element.className = `message ${type}`;
-            element.innerText = text;
+            element.innerText = text; // 🔒 Security: innerText prevents XSS
             element.style.display = 'block';
             setTimeout(() => { element.style.display = 'none'; }, 5000);
         }
