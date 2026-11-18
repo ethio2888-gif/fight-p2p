@@ -95,6 +95,13 @@
                             </div>
                         </div>
                     </div>
+                    <!-- 🆕 Organization Dropdown -->
+                    <div class="form-group">
+                        <label>Organization</label>
+                        <select id="fightOrganization" required>
+                            <option value="">Select Organization</option>
+                        </select>
+                    </div>
                     <button type="submit" class="btn btn-primary" id="submitBtn">➕ Add Fight</button>
                     <button type="button" id="cancelEditBtn" class="btn" style="margin-top: 10px; background: rgba(255, 255, 255, 0.1); color: #ccc; display: none;" onclick="cancelEdit()">❌ Cancel Edit</button>
                 </form>
@@ -105,7 +112,7 @@
             </div>
         </div>
 
-        <!-- 🆕 Organizations Tab -->
+        <!-- Organizations Tab -->
         <div id="orgsTab" style="display: none;">
             <div class="glass-panel">
                 <h2 id="orgFormTitle" style="margin-bottom: 20px; color: #fff; font-size: 1.2em;">Add New Organization</h2>
@@ -156,13 +163,14 @@
         if (!token) { window.location.href = '/login.html'; }
 
         let editingFightId = null;
-        let editingOrgId = null; // 🆕 For organization editing
+        let editingOrgId = null;
+        let allOrganizations = []; // 🆕 Store orgs for dropdown and rendering
+        
         const messageBox = document.getElementById('messageBox');
         const fightsList = document.getElementById('fightsList');
         const orgsList = document.getElementById('orgsList');
         const adsList = document.getElementById('adsList');
 
-        // 🔒 SECURITY FIRST: Prevent XSS by escaping HTML characters
         function escapeHTML(str) {
             if (str === null || str === undefined) return '';
             return String(str).replace(/[&<>'"]/g, tag => ({
@@ -183,9 +191,34 @@
             document.getElementById('adsTab').style.display = tabName === 'ads' ? 'block' : 'none';
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`tab-${tabName}`).classList.add('active');
-            if (tabName === 'fights') loadFights();
+            
+            if (tabName === 'fights') {
+                loadOrganizationsForDropdown(); // 🆕 Load orgs for the dropdown
+                loadFights();
+            }
             if (tabName === 'orgs') loadOrganizations();
             if (tabName === 'ads') loadAds();
+        }
+
+        // 🆕 Load organizations to populate the fight dropdown
+        async function loadOrganizationsForDropdown() {
+            try {
+                const res = await fetch('/api/organizations', { headers: { 'Authorization': `Bearer ${token}` } });
+                const result = await res.json();
+                if (result.success) {
+                    allOrganizations = result.data;
+                    const select = document.getElementById('fightOrganization');
+                    select.innerHTML = '<option value="">Select Organization</option>';
+                    allOrganizations.forEach(org => {
+                        const option = document.createElement('option');
+                        option.value = org._id;
+                        option.textContent = org.name;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load organizations for dropdown', error);
+            }
         }
 
         async function uploadImage(fileInputId, statusId) {
@@ -242,23 +275,29 @@
                 fightsList.innerHTML = '<p style="text-align: center; color: #888;">No fights found.</p>';
                 return;
             }
-            fightsList.innerHTML = fights.map(fight => `
-                <div class="fight-item">
-                    <div class="fight-info">
-                        ${escapeHTML(fight.fighter1.name)} 🆚 ${escapeHTML(fight.fighter2.name)}
-                        <div class="fight-date">${new Date(fight.date).toLocaleDateString()} • ${escapeHTML(fight.status).toUpperCase()}</div>
+            fightsList.innerHTML = fights.map(fight => {
+                // 🆕 Find organization name for display
+                const org = allOrganizations.find(o => o._id === fight.organization);
+                const orgName = org ? ` • 🏢 ${escapeHTML(org.name)}` : '';
+                
+                return `
+                    <div class="fight-item">
+                        <div class="fight-info">
+                            ${escapeHTML(fight.fighter1.name)} 🆚 ${escapeHTML(fight.fighter2.name)}
+                            <div class="fight-date">${new Date(fight.date).toLocaleDateString()} • ${escapeHTML(fight.status).toUpperCase()}${orgName}</div>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                            ${fight.status === 'finished' || fight.status === 'live' ? 
+                                `<button class="btn btn-success" onclick="declareWinner('${escapeHTML(fight._id)}', '${escapeHTML(fight.fighter1.name)}', '${escapeHTML(fight.fighter2.name)}')">🏆 Winner</button>` : ''}
+                            <button class="btn btn-warning" onclick="editFight('${escapeHTML(fight._id)}', '${escapeHTML(fight.fighter1.name)}', '${escapeHTML(fight.fighter2.name)}', '${escapeHTML(fight.fighter1.record)}', '${escapeHTML(fight.fighter2.record)}', '${escapeHTML(fight.fighter1.photo)}', '${escapeHTML(fight.fighter2.photo)}', '${escapeHTML(fight.date)}', '${escapeHTML(fight.status)}', '${fight.organization || ''}')">✏️ Edit</button>
+                            <button class="btn btn-danger" onclick="deleteFight('${escapeHTML(fight._id)}')">🗑️ Delete</button>
+                        </div>
                     </div>
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        ${fight.status === 'finished' || fight.status === 'live' ? 
-                            `<button class="btn btn-success" onclick="declareWinner('${escapeHTML(fight._id)}', '${escapeHTML(fight.fighter1.name)}', '${escapeHTML(fight.fighter2.name)}')">🏆 Winner</button>` : ''}
-                        <button class="btn btn-warning" onclick="editFight('${escapeHTML(fight._id)}', '${escapeHTML(fight.fighter1.name)}', '${escapeHTML(fight.fighter2.name)}', '${escapeHTML(fight.fighter1.record)}', '${escapeHTML(fight.fighter2.record)}', '${escapeHTML(fight.fighter1.photo)}', '${escapeHTML(fight.fighter2.photo)}', '${escapeHTML(fight.date)}', '${escapeHTML(fight.status)}')">✏️ Edit</button>
-                        <button class="btn btn-danger" onclick="deleteFight('${escapeHTML(fight._id)}')">🗑️ Delete</button>
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
-        function editFight(id, f1Name, f2Name, f1Record, f2Record, f1Photo, f2Photo, date, status) {
+        function editFight(id, f1Name, f2Name, f1Record, f2Record, f1Photo, f2Photo, date, status, orgId) {
             editingFightId = id;
             document.getElementById('f1Name').value = f1Name;
             document.getElementById('f2Name').value = f2Name;
@@ -266,6 +305,7 @@
             document.getElementById('f2Record').value = f2Record;
             document.getElementById('fightDate').value = date.split('T')[0];
             document.getElementById('fightStatus').value = status;
+            document.getElementById('fightOrganization').value = orgId || ''; // 🆕 Set organization
             document.getElementById('existingF1Photo').value = f1Photo;
             document.getElementById('existingF2Photo').value = f2Photo;
             document.getElementById('upload1Status').innerText = '💡 Current photo kept if empty.';
@@ -299,6 +339,7 @@
             const existingF2Photo = document.getElementById('existingF2Photo').value || '🥊';
 
             const fightData = {
+                organization: document.getElementById('fightOrganization').value || null, // 🆕 Include organization ID
                 fighter1: { name: document.getElementById('f1Name').value, record: document.getElementById('f1Record').value || '0-0-0', photo: f1PhotoUrl || existingF1Photo },
                 fighter2: { name: document.getElementById('f2Name').value, record: document.getElementById('f2Record').value || '0-0-0', photo: f2PhotoUrl || existingF2Photo },
                 date: document.getElementById('fightDate').value,
@@ -374,7 +415,7 @@
         }
 
         // ==========================================
-        // 🏢 ORGANIZATIONS LOGIC (🆕)
+        // 🏢 ORGANIZATIONS LOGIC
         // ==========================================
         async function loadOrganizations() {
             try {
@@ -572,6 +613,7 @@
         }
 
         // Initialize first tab
+        loadOrganizationsForDropdown(); // 🆕 Load orgs on startup for the fights tab
         loadFights();
     </script>
 </body>
