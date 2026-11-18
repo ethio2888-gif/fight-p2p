@@ -34,29 +34,25 @@
       margin-top: 20px;
     }
 
-    /* 🆕 ወደ ዋና ገጽ የሚመልስ ቁልፍ */
-    .back-link {
+    /* 🆕 ቀላል እና ጽዳት ያለው የመመለሻ ቀስት (Back Arrow) */
+    .back-btn {
       display: inline-flex;
       align-items: center;
-      color: var(--text-muted);
-      text-decoration: none;
-      font-size: 0.95rem;
-      font-weight: 600;
-      margin-bottom: 20px;
-      transition: color 0.3s;
-      padding: 8px 12px;
-      background: var(--glass);
-      border-radius: 8px;
-      border: 1px solid var(--glass-border);
-    }
-    .back-link:hover {
+      justify-content: center;
+      width: 44px; /* ለሞባይል ተስማሚ የንክኪ ስፋት */
+      height: 44px;
       color: var(--text);
-      background: rgba(255, 255, 255, 0.1);
+      text-decoration: none;
+      font-size: 1.5rem;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      margin-bottom: 20px;
     }
-    .back-link::before {
-      content: '←';
-      margin-right: 6px;
-      font-size: 1.2rem;
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateX(-4px); /* ወደ ኋላ የመሄድ ስሜት ይሰጣል */
     }
 
     .header {
@@ -203,11 +199,11 @@
 <body>
 
   <div class="container">
-    <!-- 🆕 ወደ ዋና ገጽ የሚመልስ ቁልፍ -->
-    <a href="/" class="back-link">ወደ ዋና ገጽ ተመለስ</a>
+    <!-- 🆕 ቀላል የመመለሻ ቀስት (ወደ ዋና ገጽ ይመልሳል) -->
+    <a href="/" class="back-btn" aria-label="Back to Home">←</a>
 
     <div class="header">
-      <h1>🥊 የእኔ ፕሮፋይል</h1>
+      <h1>🥊 ፕሮፋይል</h1>
     </div>
 
     <div id="loading" class="loading">መረጃ እየተጫነ ነው...</div>
@@ -261,6 +257,7 @@
       }
 
       try {
+        // 🔒 Security: Token በ Authorization header ይላካል
         const response = await fetch(`${API_URL}/api/users/me`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -277,6 +274,7 @@
           document.getElementById('loading').style.display = 'none';
           document.getElementById('profileContent').style.display = 'block';
           
+          // 🔒 Security First: XSS መከላከያ (textContent ይጠቀማል)
           document.getElementById('displayUsername').textContent = data.username;
           document.getElementById('userAvatar').textContent = data.username.charAt(0).toUpperCase();
           document.getElementById('displayBalance').textContent = `${data.balance} ፖይንት`;
@@ -337,7 +335,7 @@
 
     function showMessage(text, type) {
       const msgBox = document.getElementById('messageBox');
-      msgBox.textContent = text;
+      msgBox.textContent = text; // 🔒 Security: textContent ስለሆነ XSS አይፈጠርም
       msgBox.className = `message ${type}`;
       setTimeout(() => {
         msgBox.className = 'message';
@@ -347,6 +345,9 @@
 
     function logout() {
       localStorage.removeItem('token');
+      localStorage.removeItem('username');
+      localStorage.removeItem('balance');
+      localStorage.removeItem('isVerified');
       window.location.href = '/login.html';
     }
   </script>
