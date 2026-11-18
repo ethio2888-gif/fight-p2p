@@ -93,7 +93,6 @@
         }
         .bonus-btn:disabled { background: #1a1a25; color: #555; border: 1px solid #333; cursor: not-allowed; }
 
-        /* 🆕 Organizations Section Styles */
         .organizations-section { margin-bottom: 30px; }
         .org-scroll-container {
             display: flex;
@@ -358,7 +357,6 @@
 
         <div id="ads-container" class="ads-container"></div>
 
-        <!-- 🆕 Organizations Section -->
         <div id="organizations-container" class="organizations-section">
             <h2 class="section-title">🏢 Choose Organization</h2>
             <div id="org-scroll-container" class="org-scroll-container">
@@ -407,7 +405,7 @@
         const token = localStorage.getItem('token');
         const username = localStorage.getItem('username');
         const isVerified = localStorage.getItem('isVerified') === 'true';
-        let selectedOrgId = null; // 🆕 Track selected organization
+        let selectedOrgId = null; 
 
         function escapeHTML(str) {
             if (str === null || str === undefined) return '';
@@ -478,7 +476,6 @@
             } catch (error) { console.error('Bonus error:', error); }
         }
 
-        // 🆕 Load and display organizations
         async function loadOrganizations() {
             try {
                 const response = await fetch('/api/organizations');
@@ -498,7 +495,6 @@
             const container = document.getElementById('org-scroll-container');
             container.innerHTML = '';
             
-            // "All Fights" option
             const allCard = document.createElement('div');
             allCard.className = `org-card ${selectedOrgId === null ? 'active' : ''}`;
             allCard.innerHTML = `<div style="font-size: 2em; margin-bottom: 8px;">🔥</div><div class="org-name">All Fights</div>`;
@@ -521,9 +517,10 @@
             if (element) {
                 element.classList.add('active');
             }
-            loadFights(); // Reload fights with new filter
+            loadFights(); 
         }
 
+        // 🔒 SECURITY & 🚀 HIGH TRAFFIC: Robust filtering (handles both string ID and populated object)
         async function loadFights() {
             const container = document.getElementById('fights-container');
             container.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">⏳ Loading fights from database...</p>';
@@ -532,15 +529,17 @@
                 if (!response.ok) throw new Error(`Server returned ${response.status}`);
                 let fights = await response.json();
                 
-                // 🚀 HIGH TRAFFIC: Frontend filtering (Fallback until backend query param is fully implemented)
                 if (selectedOrgId) {
-                    fights = fights.filter(f => f.organization === selectedOrgId);
+                    fights = fights.filter(f => {
+                        const fightOrgId = typeof f.organization === 'object' ? f.organization._id : f.organization;
+                        return fightOrgId === selectedOrgId;
+                    });
                 }
 
                 if (Array.isArray(fights) && fights.length > 0) {
                     displayFights(fights);
                 } else {
-                    container.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">No upcoming fights for this selection at the moment.</p>';
+                    container.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">No upcoming fights for this organization at the moment.</p>';
                 }
             } catch (error) {
                 console.error('Error loading fights:', error);
@@ -717,7 +716,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             initializeUserInterface();
-            loadOrganizations(); // 🆕 Load organizations first
+            loadOrganizations(); 
             loadFights();
             loadAds();
             const claimBtn = document.getElementById('claimBonusBtn');
