@@ -19,6 +19,27 @@
 
         .container { max-width: 700px; margin: 0 auto; }
 
+        /* 🆕 ቀላል እና ጽዳት ያለው የመመለሻ ቀስት (Back Arrow) */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            color: #e0e0e0;
+            text-decoration: none;
+            font-size: 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateX(-4px);
+        }
+
         /* --- Glassmorphism Utility --- */
         .glass-panel {
             background: rgba(255, 255, 255, 0.03);
@@ -57,7 +78,6 @@
         .btn:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0,0,0,0.3); }
         .btn:active { transform: translateY(0); }
 
-        .btn-home { background: linear-gradient(135deg, #4ecca3 0%, #3fa890 100%); color: #0f0f1a; }
         .btn-logout { background: linear-gradient(135deg, #e94560 0%, #c73650 100%); color: white; }
 
         /* --- Header --- */
@@ -135,6 +155,9 @@
 </head>
 <body>
     <div class="container">
+        <!-- 🆕 ቀላል የመመለሻ ቀስት (ወደ ዋና ገጽ ይመልሳል) -->
+        <a href="/" class="back-btn" aria-label="Back to Home">←</a>
+
         <div class="user-bar glass-panel">
             <div class="user-info" id="userInfo">Loading...</div>
             <div id="authButtons"></div>
@@ -151,22 +174,28 @@
     </div>
 
     <script>
-        // ==========================================
-        // 🔒 SECURITY FIRST: All logic preserved exactly as before
-        // ==========================================
+        // 🔒 SECURITY FIRST: Prevent XSS by escaping HTML characters
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag]));
+        }
+
         const token = localStorage.getItem('token');
         const username = localStorage.getItem('username');
         const userPoints = parseInt(localStorage.getItem('balance')) || 0;
 
         if (token && username) {
-            document.getElementById('userInfo').innerHTML = `Welcome, <span>${username}</span>! | Balance: <span>${userPoints}</span> Points`;
+            // 🔒 Security: Escape username before injecting into DOM
+            const safeUsername = escapeHTML(username);
+            document.getElementById('userInfo').innerHTML = `Welcome, <span>${safeUsername}</span>! | Balance: <span>${userPoints}</span> Points`;
             document.getElementById('authButtons').innerHTML = `
-                <a href="/" class="btn btn-home" style="margin-right: 10px;">ዋና ገጽ</a>
                 <button class="btn btn-logout" onclick="logout()">Logout</button>
             `;
         } else {
             document.getElementById('userInfo').innerHTML = `Welcome, Guest!`;
-            document.getElementById('authButtons').innerHTML = `<a href="/login.html" class="btn btn-home">Login</a>`;
+            document.getElementById('authButtons').innerHTML = `<a href="/login.html" class="btn btn-logout" style="background: linear-gradient(135deg, #4ecca3 0%, #3fa890 100%); color: #0f0f1a;">Login</a>`;
         }
 
         function logout() {
@@ -176,7 +205,8 @@
 
         async function loadLeaderboard() {
             try {
-                const response = await fetch('https://fight-p2p.onrender.com/api/leaderboard');
+                // 🚀 HIGH TRAFFIC: Relative URL ስለሆነ በማንኛውም ዶሜይን (Localhost/Production) ይሰራል እና ፈጣን ነው
+                const response = await fetch('/api/leaderboard');
                 const users = await response.json();
                 displayLeaderboard(users);
             } catch (error) {
