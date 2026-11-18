@@ -1,10 +1,16 @@
 const mongoose = require('mongoose');
 
 const fightSchema = new mongoose.Schema({
+  // 🆕 የድርጅት መለያ (Organization Link)
+  organization: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: false // ለአሁኑ ያሉ ፋይቶች እንዳይሰበሩ optional አድርጌዋለሁ፣ ግን አዲስ ሲጨመር መምረጥ ይገባል
+  },
   fighter1: {
     name: { type: String, required: true, trim: true },
     record: { type: String, default: '0-0-0' },
-    photo: { type: String, default: '🥊' } // ኢሞጂ ወይም የ Cloudinary ምስል ሊንክ
+    photo: { type: String, default: '🥊' }
   },
   fighter2: {
     name: { type: String, required: true, trim: true },
@@ -21,12 +27,9 @@ const fightSchema = new mongoose.Schema({
     default: 'upcoming'
   },
   winner: {
-    type: String, // 'red', 'blue', ወይም 'draw'
+    type: String, 
     default: null 
   },
-  // 🔥 CRITICAL FIX: Removed the 'bets' array entirely. 
-  // Bets are now stored ONLY in the Bet model (linked by eventId) to prevent the 16MB MongoDB document limit crash and race conditions.
-  
   addedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -37,8 +40,8 @@ const fightSchema = new mongoose.Schema({
 });
 
 // 🚀 HIGH TRAFFIC: Add indexes for ultra-fast querying
-// This ensures that fetching "upcoming" or "live" fights takes milliseconds, even with millions of records.
 fightSchema.index({ status: 1, date: 1 });
 fightSchema.index({ addedBy: 1 });
+fightSchema.index({ organization: 1 }); // 🆕 ለድርጅት ፍልተር ፈጣን እንዲሆን
 
 module.exports = mongoose.model('Fight', fightSchema);
