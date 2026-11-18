@@ -31,7 +31,6 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
         }
         
-        /* 🆕 ቀላል የላይኛው ክፍል */
         .top-bar {
             padding: 12px 16px;
             margin-bottom: 20px;
@@ -93,6 +92,54 @@
             font-family: 'Montserrat', sans-serif;
         }
         .bonus-btn:disabled { background: #1a1a25; color: #555; border: 1px solid #333; cursor: not-allowed; }
+
+        /* 🆕 Organizations Section Styles */
+        .organizations-section { margin-bottom: 30px; }
+        .org-scroll-container {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scrollbar-width: thin;
+            scrollbar-color: #ffd700 rgba(255, 255, 255, 0.1);
+        }
+        .org-scroll-container::-webkit-scrollbar { height: 6px; }
+        .org-scroll-container::-webkit-scrollbar-thumb { background: #ffd700; border-radius: 3px; }
+        .org-card {
+            flex: 0 0 auto;
+            width: 110px;
+            padding: 15px 10px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .org-card:hover, .org-card.active {
+            background: rgba(255, 215, 0, 0.1);
+            border-color: #ffd700;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.15);
+        }
+        .org-logo {
+            width: 45px;
+            height: 45px;
+            object-fit: contain;
+            margin-bottom: 8px;
+            border-radius: 50%;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .org-name {
+            font-size: 0.8em;
+            font-weight: 600;
+            color: #e0e0e0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .org-card.active .org-name { color: #ffd700; }
 
         .ads-container { margin-bottom: 30px; display: flex; flex-direction: column; gap: 15px; align-items: center; }
         .ad-banner {
@@ -243,7 +290,6 @@
 
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
-        /* 🆕 Bottom Navigation Bar */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -295,7 +341,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- 🆕 ቀላል የላይኛው ክፍል -->
         <div class="top-bar glass-panel" id="topBar">
             <div class="user-info" id="userInfo"></div>
             <button class="btn-logout" id="logoutBtn" style="display: none;" onclick="logout()">Logout</button>
@@ -312,6 +357,14 @@
         </div>
 
         <div id="ads-container" class="ads-container"></div>
+
+        <!-- 🆕 Organizations Section -->
+        <div id="organizations-container" class="organizations-section">
+            <h2 class="section-title">🏢 Choose Organization</h2>
+            <div id="org-scroll-container" class="org-scroll-container">
+                <!-- Organizations will be injected here -->
+            </div>
+        </div>
 
         <div class="fights-section">
             <h2 class="section-title">🔥 Upcoming Fights</h2>
@@ -330,7 +383,6 @@
         </footer>
     </div>
 
-    <!-- 🆕 Bottom Navigation Bar -->
     <nav class="bottom-nav">
         <a href="/" class="nav-item active">
             <span class="nav-icon">🏠</span>
@@ -355,6 +407,7 @@
         const token = localStorage.getItem('token');
         const username = localStorage.getItem('username');
         const isVerified = localStorage.getItem('isVerified') === 'true';
+        let selectedOrgId = null; // 🆕 Track selected organization
 
         function escapeHTML(str) {
             if (str === null || str === undefined) return '';
@@ -371,7 +424,6 @@
             return escapeHTML(photo);
         }
 
-        // 🆕 ቀላል የላይኛው ክፍል
         function initializeUserInterface() {
             const userInfoDiv = document.getElementById('userInfo');
             const logoutBtn = document.getElementById('logoutBtn');
@@ -426,18 +478,69 @@
             } catch (error) { console.error('Bonus error:', error); }
         }
 
+        // 🆕 Load and display organizations
+        async function loadOrganizations() {
+            try {
+                const response = await fetch('/api/organizations');
+                const result = await response.json();
+                if (result.success && result.data.length > 0) {
+                    renderOrganizations(result.data);
+                } else {
+                    document.getElementById('organizations-container').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Error loading organizations:', error);
+                document.getElementById('organizations-container').style.display = 'none';
+            }
+        }
+
+        function renderOrganizations(orgs) {
+            const container = document.getElementById('org-scroll-container');
+            container.innerHTML = '';
+            
+            // "All Fights" option
+            const allCard = document.createElement('div');
+            allCard.className = `org-card ${selectedOrgId === null ? 'active' : ''}`;
+            allCard.innerHTML = `<div style="font-size: 2em; margin-bottom: 8px;">🔥</div><div class="org-name">All Fights</div>`;
+            allCard.onclick = (e) => selectOrganization(null, e.currentTarget);
+            container.appendChild(allCard);
+
+            orgs.forEach(org => {
+                const card = document.createElement('div');
+                card.className = `org-card ${selectedOrgId === org._id ? 'active' : ''}`;
+                const logoHtml = org.logoUrl ? `<img src="${escapeHTML(org.logoUrl)}" class="org-logo" alt="${escapeHTML(org.name)}">` : `<div style="font-size: 2em; margin-bottom: 8px;">🏢</div>`;
+                card.innerHTML = `${logoHtml}<div class="org-name">${escapeHTML(org.name)}</div>`;
+                card.onclick = (e) => selectOrganization(org._id, e.currentTarget);
+                container.appendChild(card);
+            });
+        }
+
+        function selectOrganization(orgId, element) {
+            selectedOrgId = orgId;
+            document.querySelectorAll('.org-card').forEach(c => c.classList.remove('active'));
+            if (element) {
+                element.classList.add('active');
+            }
+            loadFights(); // Reload fights with new filter
+        }
+
         async function loadFights() {
             const container = document.getElementById('fights-container');
             container.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">⏳ Loading fights from database...</p>';
             try {
                 const response = await fetch('/api/fights');
                 if (!response.ok) throw new Error(`Server returned ${response.status}`);
-                const fights = await response.json();
+                let fights = await response.json();
                 
+                // 🚀 HIGH TRAFFIC: Frontend filtering (Fallback until backend query param is fully implemented)
+                if (selectedOrgId) {
+                    fights = fights.filter(f => f.organization === selectedOrgId);
+                }
+
                 if (Array.isArray(fights) && fights.length > 0) {
                     displayFights(fights);
                 } else {
-                    container.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">No upcoming fights at the moment. Check back soon!</p>';
+                    container.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">No upcoming fights for this selection at the moment.</p>';
                 }
             } catch (error) {
                 console.error('Error loading fights:', error);
@@ -614,6 +717,7 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             initializeUserInterface();
+            loadOrganizations(); // 🆕 Load organizations first
             loadFights();
             loadAds();
             const claimBtn = document.getElementById('claimBonusBtn');
