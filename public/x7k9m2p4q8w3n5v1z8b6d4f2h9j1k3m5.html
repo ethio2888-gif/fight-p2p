@@ -34,8 +34,8 @@
         .btn-success:hover { background: #4ecca3; color: #0a0a12; }
         .btn-logout { background: rgba(233, 69, 96, 0.15); color: #e94560; border: 1px solid rgba(233, 69, 96, 0.3); padding: 10px 20px; font-size: 0.9em; width: auto; }
         .btn-logout:hover { background: #e94560; color: white; }
-        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { flex: 1; padding: 12px; background: rgba(255, 255, 255, 0.05); color: #ccc; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; cursor: pointer; font-weight: 600; font-family: 'Montserrat', sans-serif; transition: all 0.3s; }
+        .tab-buttons { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-btn { flex: 1; padding: 12px; background: rgba(255, 255, 255, 0.05); color: #ccc; border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 10px; cursor: pointer; font-weight: 600; font-family: 'Montserrat', sans-serif; transition: all 0.3s; min-width: 120px; }
         .tab-btn:hover, .tab-btn.active { background: rgba(255, 215, 0, 0.15); color: #ffd700; border-color: rgba(255, 215, 0, 0.3); }
         .fight-list { margin-top: 20px; }
         .fight-item { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: rgba(255, 255, 255, 0.02); border-radius: 12px; margin-bottom: 10px; border: 1px solid rgba(255, 255, 255, 0.05); }
@@ -63,8 +63,9 @@
         <div id="messageBox" class="message"></div>
 
         <div class="tab-buttons">
-            <button id="tab-fights" class="tab-btn active" onclick="showTab('fights')">🥊 Fights Management</button>
-            <button id="tab-ads" class="tab-btn" onclick="showTab('ads')">📢 Ad Management</button>
+            <button id="tab-fights" class="tab-btn active" onclick="showTab('fights')">🥊 Fights</button>
+            <button id="tab-orgs" class="tab-btn" onclick="showTab('orgs')">🏢 Organizations</button>
+            <button id="tab-ads" class="tab-btn" onclick="showTab('ads')">📢 Ads</button>
         </div>
 
         <!-- Fights Tab -->
@@ -104,6 +105,33 @@
             </div>
         </div>
 
+        <!-- 🆕 Organizations Tab -->
+        <div id="orgsTab" style="display: none;">
+            <div class="glass-panel">
+                <h2 id="orgFormTitle" style="margin-bottom: 20px; color: #fff; font-size: 1.2em;">Add New Organization</h2>
+                <form id="orgForm">
+                    <input type="hidden" id="existingOrgId">
+                    <input type="hidden" id="existingOrgLogo">
+                    <div class="row">
+                        <div class="col">
+                            <div class="form-group"><label>Organization Name</label><input type="text" id="orgName" required placeholder="e.g., UFC, EFC"></div>
+                            <div class="form-group"><label>Description</label><input type="text" id="orgDescription" placeholder="e.g., Ultimate Fighting Championship"></div>
+                        </div>
+                        <div class="col">
+                            <div class="form-group"><label>Display Order</label><input type="number" id="orgDisplayOrder" value="0" placeholder="0 (Lower shows first)"></div>
+                            <div class="form-group"><label>Logo Image</label><input type="file" id="orgLogoFile" accept="image/*"><p id="uploadOrgStatus" class="upload-status"></p></div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="orgSubmitBtn">➕ Add Organization</button>
+                    <button type="button" id="cancelOrgEditBtn" class="btn" style="margin-top: 10px; background: rgba(255, 255, 255, 0.1); color: #ccc; display: none;" onclick="cancelEditOrg()">❌ Cancel Edit</button>
+                </form>
+            </div>
+            <div class="glass-panel">
+                <h2 style="margin-bottom: 20px; color: #fff; font-size: 1.2em;">Current Organizations</h2>
+                <div id="orgsList" class="fight-list"><p style="text-align: center; color: #888;">Loading...</p></div>
+            </div>
+        </div>
+
         <!-- Ads Tab -->
         <div id="adsTab" style="display: none;">
             <div class="glass-panel">
@@ -128,8 +156,10 @@
         if (!token) { window.location.href = '/login.html'; }
 
         let editingFightId = null;
+        let editingOrgId = null; // 🆕 For organization editing
         const messageBox = document.getElementById('messageBox');
         const fightsList = document.getElementById('fightsList');
+        const orgsList = document.getElementById('orgsList');
         const adsList = document.getElementById('adsList');
 
         // 🔒 SECURITY FIRST: Prevent XSS by escaping HTML characters
@@ -149,10 +179,12 @@
 
         function showTab(tabName) {
             document.getElementById('fightsTab').style.display = tabName === 'fights' ? 'block' : 'none';
+            document.getElementById('orgsTab').style.display = tabName === 'orgs' ? 'block' : 'none';
             document.getElementById('adsTab').style.display = tabName === 'ads' ? 'block' : 'none';
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`tab-${tabName}`).classList.add('active');
             if (tabName === 'fights') loadFights();
+            if (tabName === 'orgs') loadOrganizations();
             if (tabName === 'ads') loadAds();
         }
 
@@ -188,6 +220,9 @@
             }
         }
 
+        // ==========================================
+        // 🥊 FIGHTS LOGIC
+        // ==========================================
         async function loadFights() {
             try {
                 const res = await fetch('/api/fights', { headers: { 'Authorization': `Bearer ${token}` } });
@@ -202,7 +237,6 @@
             }
         }
 
-        // 🔒 SECURITY FIRST: escapeHTML() applied to ALL dynamic content
         function renderFights(fights) {
             if (fights.length === 0) {
                 fightsList.innerHTML = '<p style="text-align: center; color: #888;">No fights found.</p>';
@@ -296,7 +330,6 @@
             }
         });
 
-        // 🚀 LOGIC FIX: Removed manual payout prompt. Backend auto-calculates payouts!
         async function declareWinner(fightId, f1Name, f2Name) {
             const winner = prompt(`Who won the fight?\n1. ${f1Name}\n2. ${f2Name}\n\nEnter 1 or 2:`);
             if (!winner || (winner !== '1' && winner !== '2')) {
@@ -304,7 +337,7 @@
                 return;
             }
             const winnerName = winner === '1' ? f1Name : f2Name;
-            const winnerKey = winner === '1' ? 'red' : 'blue'; // 🔒 Matches backend enum
+            const winnerKey = winner === '1' ? 'red' : 'blue';
 
             try {
                 const res = await fetch(`/api/fights/${fightId}/declare-winner`, {
@@ -340,6 +373,128 @@
             }
         }
 
+        // ==========================================
+        // 🏢 ORGANIZATIONS LOGIC (🆕)
+        // ==========================================
+        async function loadOrganizations() {
+            try {
+                const res = await fetch('/api/organizations/admin', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.status === 403) {
+                    orgsList.innerHTML = '<p style="text-align:center; color:#e94560;">Admin access required.</p>';
+                    return;
+                }
+                const result = await res.json();
+                renderOrganizations(result.data || []);
+            } catch (error) {
+                showMessage('❌ Failed to load organizations.', 'error');
+            }
+        }
+
+        function renderOrganizations(orgs) {
+            if (orgs.length === 0) {
+                orgsList.innerHTML = '<p style="text-align: center; color: #888;">No organizations found.</p>';
+                return;
+            }
+            orgsList.innerHTML = orgs.map(org => `
+                <div class="fight-item">
+                    <div class="fight-info" style="display: flex; align-items: center; gap: 15px;">
+                        ${org.logoUrl ? `<img src="${escapeHTML(org.logoUrl)}" alt="Logo" style="width: 40px; height: 40px; object-fit: contain; border-radius: 50%; background: rgba(255,255,255,0.1);">` : '🏢'}
+                        <div>
+                            <strong>${escapeHTML(org.name)}</strong>
+                            <div class="fight-date">${escapeHTML(org.description || 'No description')} • Order: ${org.displayOrder} • ${org.isActive ? '✅ Active' : '❌ Inactive'}</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="btn btn-warning" onclick="editOrganization('${escapeHTML(org._id)}', '${escapeHTML(org.name)}', '${escapeHTML(org.description || '')}', '${escapeHTML(org.logoUrl || '')}', ${org.displayOrder}, ${org.isActive})">✏️ Edit</button>
+                        <button class="btn btn-danger" onclick="deleteOrganization('${escapeHTML(org._id)}')">🗑️ Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function editOrganization(id, name, description, logoUrl, displayOrder, isActive) {
+            editingOrgId = id;
+            document.getElementById('orgName').value = name;
+            document.getElementById('orgDescription').value = description;
+            document.getElementById('orgDisplayOrder').value = displayOrder;
+            document.getElementById('existingOrgLogo').value = logoUrl;
+            document.getElementById('uploadOrgStatus').innerText = '💡 Current logo kept if empty.';
+            document.getElementById('orgFormTitle').innerText = '✏️ Edit Organization';
+            document.getElementById('orgSubmitBtn').innerText = '💾 Update Organization';
+            document.getElementById('cancelOrgEditBtn').style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function cancelEditOrg() {
+            editingOrgId = null;
+            document.getElementById('orgForm').reset();
+            document.getElementById('orgFormTitle').innerText = 'Add New Organization';
+            document.getElementById('orgSubmitBtn').innerText = '➕ Add Organization';
+            document.getElementById('cancelOrgEditBtn').style.display = 'none';
+            document.getElementById('uploadOrgStatus').innerText = '';
+        }
+
+        document.getElementById('orgForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('orgSubmitBtn');
+            const originalBtnText = submitBtn.innerText;
+            submitBtn.innerText = '⏳ Processing...';
+            submitBtn.disabled = true;
+
+            const logoUrl = await uploadImage('orgLogoFile', 'uploadOrgStatus');
+            const existingLogo = document.getElementById('existingOrgLogo').value || '';
+
+            const orgData = {
+                name: document.getElementById('orgName').value,
+                description: document.getElementById('orgDescription').value,
+                logoUrl: logoUrl || existingLogo,
+                displayOrder: parseInt(document.getElementById('orgDisplayOrder').value) || 0
+            };
+
+            try {
+                const url = editingOrgId ? `/api/organizations/${editingOrgId}` : '/api/organizations';
+                const method = editingOrgId ? 'PUT' : 'POST';
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(orgData)
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showMessage(editingOrgId ? '✅ Organization updated!' : '✅ Organization added!', 'success');
+                    document.getElementById('orgForm').reset();
+                    cancelEditOrg();
+                    loadOrganizations();
+                } else {
+                    showMessage('❌ ' + (data.message || 'Failed'), 'error');
+                }
+            } catch (error) {
+                showMessage('❌ Network error.', 'error');
+            } finally {
+                submitBtn.innerText = originalBtnText;
+                submitBtn.disabled = false;
+            }
+        });
+
+        async function deleteOrganization(orgId) {
+            if (!confirm('Delete this organization? (Note: Cannot delete if fights are linked to it)')) return;
+            try {
+                const res = await fetch(`/api/organizations/${orgId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                if (res.ok) {
+                    showMessage('✅ Organization deleted!', 'success');
+                    loadOrganizations();
+                } else {
+                    showMessage('❌ ' + (data.message || 'Failed'), 'error');
+                }
+            } catch (error) {
+                showMessage('❌ Network error.', 'error');
+            }
+        }
+
+        // ==========================================
+        // 📢 ADS LOGIC
+        // ==========================================
         async function loadAds() {
             try {
                 const res = await fetch('/api/ads', { headers: { 'Authorization': `Bearer ${token}` } });
@@ -416,6 +571,7 @@
             window.location.href = '/';
         }
 
+        // Initialize first tab
         loadFights();
     </script>
 </body>
