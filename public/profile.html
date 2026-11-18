@@ -31,7 +31,32 @@
     .container {
       width: 100%;
       max-width: 500px;
-      margin-top: 40px;
+      margin-top: 20px;
+    }
+
+    /* 🆕 ወደ ዋና ገጽ የሚመልስ ቁልፍ */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.95rem;
+      font-weight: 600;
+      margin-bottom: 20px;
+      transition: color 0.3s;
+      padding: 8px 12px;
+      background: var(--glass);
+      border-radius: 8px;
+      border: 1px solid var(--glass-border);
+    }
+    .back-link:hover {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .back-link::before {
+      content: '←';
+      margin-right: 6px;
+      font-size: 1.2rem;
     }
 
     .header {
@@ -178,6 +203,9 @@
 <body>
 
   <div class="container">
+    <!-- 🆕 ወደ ዋና ገጽ የሚመልስ ቁልፍ -->
+    <a href="/" class="back-link">ወደ ዋና ገጽ ተመለስ</a>
+
     <div class="header">
       <h1>🥊 የእኔ ፕሮፋይል</h1>
     </div>
@@ -221,9 +249,8 @@
   </div>
 
   <script>
-    const API_URL = window.location.origin; // ወይም https://fight-p2p.onrender.com
+    const API_URL = window.location.origin; 
 
-    // ገጹ ሲጫን መረጃውን አምጣ
     document.addEventListener('DOMContentLoaded', loadProfile);
 
     async function loadProfile() {
@@ -298,7 +325,7 @@
         if (response.ok) {
           showMessage('ፕሮፋይል በተሳካ ሁኔታ ተዘምኗል!', 'success');
           document.getElementById('newUsername').value = '';
-          setTimeout(() => loadProfile(), 1000); // ገጹን አድስ
+          setTimeout(() => loadProfile(), 1000); 
         } else {
           showMessage(data.message || 'ስም ማዘመን አልተሳካም', 'error');
         }
