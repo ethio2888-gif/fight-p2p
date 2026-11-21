@@ -178,7 +178,7 @@
             border-radius: 12px;
         }
         .fighter:hover {
-            transform: scale(1.05);
+            transform: scale(1.02);
             background: rgba(255, 255, 255, 0.03);
         }
         .fighter:hover .fighter-name { color: #ffd700; }
@@ -202,6 +202,8 @@
         }
         .fighter-name { font-family: 'Montserrat', sans-serif; font-size: 1.1em; font-weight: 800; color: #ffffff; margin-bottom: 4px; transition: color 0.2s; }
         .fighter-record { color: #888; font-size: 0.8em; font-weight: 500; background: rgba(255,255,255,0.05); display: inline-block; padding: 3px 10px; border-radius: 20px; }
+        .stats-icon { cursor: pointer; margin-left: 6px; font-size: 1em; transition: transform 0.2s; display: inline-block; }
+        .stats-icon:hover { transform: scale(1.3); }
         .predict-hint {
             font-size: 0.75em;
             color: #ffd700;
@@ -314,7 +316,6 @@
             transform: translateY(-2px);
         }
 
-        /* 🆕 Comments Section Styles */
         .comments-section { margin-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 15px; }
         .btn-toggle-comments { background: none; border: none; color: #888; cursor: pointer; font-weight: 600; display: flex; align-items: center; gap: 5px; font-size: 0.9em; transition: color 0.2s; }
         .btn-toggle-comments:hover { color: #ffd700; }
@@ -338,6 +339,38 @@
         .message.warning { background-color: rgba(255, 215, 0, 0.1); color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.2); }
 
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+        /* 🆕 Fighter Profile Modal Styles */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
+            z-index: 2000; display: none; justify-content: center; align-items: center;
+            padding: 20px;
+        }
+        .modal-content {
+            width: 100%; max-width: 450px; max-height: 85vh; overflow-y: auto;
+            padding: 25px; position: relative; animation: slideDown 0.3s ease-out;
+        }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .modal-header h2 { color: #ffd700; font-size: 1.4em; }
+        .close-modal { background: none; border: none; color: #888; font-size: 1.5em; cursor: pointer; transition: color 0.2s; }
+        .close-modal:hover { color: #fff; }
+        .fighter-stats { display: flex; justify-content: space-around; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        .stat-box { text-align: center; }
+        .stat-value { font-size: 1.4em; font-weight: 800; color: #fff; }
+        .stat-label { font-size: 0.75em; color: #888; text-transform: uppercase; margin-top: 4px; }
+        .stat-value.win { color: #4ecca3; }
+        .stat-value.loss { color: #e94560; }
+        .stat-value.draw { color: #ffd700; }
+        .history-list { max-height: 250px; overflow-y: auto; }
+        .history-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.9em; }
+        .history-item:last-child { border-bottom: none; }
+        .history-opponent { font-weight: 600; color: #fff; }
+        .history-date { font-size: 0.8em; color: #888; margin-top: 2px; }
+        .history-result { font-weight: 800; font-size: 0.9em; padding: 4px 10px; border-radius: 6px; background: rgba(255,255,255,0.05); }
+        .history-result.Win { color: #4ecca3; background: rgba(78, 204, 163, 0.1); }
+        .history-result.Loss { color: #e94560; background: rgba(233, 69, 96, 0.1); }
+        .history-result.Draw { color: #ffd700; background: rgba(255, 215, 0, 0.1); }
 
         .bottom-nav {
             position: fixed;
@@ -423,6 +456,23 @@
                 <a href="/terms.html">Terms & Conditions</a>
             </div>
         </footer>
+    </div>
+
+    <!-- 🆕 Fighter Profile Modal -->
+    <div id="fighter-modal" class="modal-overlay" onclick="closeFighterProfile(event)">
+        <div class="modal-content glass-panel" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 id="modal-fighter-name">Fighter Name</h2>
+                <button class="close-modal" onclick="closeFighterProfile()">✕</button>
+            </div>
+            <div id="modal-fighter-stats" class="fighter-stats">
+                <p style="text-align:center; width:100%; color:#888;">⏳ Loading stats...</p>
+            </div>
+            <h3 style="margin: 0 0 10px; color: #ffd700; font-size: 1em; font-weight: 700;">Recent History</h3>
+            <div id="modal-fighter-history" class="history-list">
+                <!-- History items injected here -->
+            </div>
+        </div>
     </div>
 
     <nav class="bottom-nav">
@@ -580,17 +630,17 @@
                 </div>
                 <div class="matchup-container">
                     <div class="fighter" onclick="openPrediction('${fight._id}', 'red', '${escapeHTML(fight.fighter1.name)}')">
-                        <div class="fighter-photo">${renderFighterPhoto(fight.fighter1.photo)}</div>
-                        <div class="fighter-name">${escapeHTML(fight.fighter1.name)}</div>
+                        <div class="fighter-photo" onclick="openFighterProfile('${escapeHTML(fight.fighter1.name)}', event)">${renderFighterPhoto(fight.fighter1.photo)}</div>
+                        <div class="fighter-name" onclick="openFighterProfile('${escapeHTML(fight.fighter1.name)}', event)">${escapeHTML(fight.fighter1.name)} <span class="stats-icon">📊</span></div>
                         <div class="fighter-record">${escapeHTML(fight.fighter1.record)}</div>
-                        <div class="predict-hint">Tap to Predict</div>
+                        <div class="predict-hint">Tap 📊 for Stats, Card to Predict</div>
                     </div>
                     <div class="vs-badge">VS</div>
                     <div class="fighter" onclick="openPrediction('${fight._id}', 'blue', '${escapeHTML(fight.fighter2.name)}')">
-                        <div class="fighter-photo">${renderFighterPhoto(fight.fighter2.photo)}</div>
-                        <div class="fighter-name">${escapeHTML(fight.fighter2.name)}</div>
+                        <div class="fighter-photo" onclick="openFighterProfile('${escapeHTML(fight.fighter2.name)}', event)">${renderFighterPhoto(fight.fighter2.photo)}</div>
+                        <div class="fighter-name" onclick="openFighterProfile('${escapeHTML(fight.fighter2.name)}', event)">${escapeHTML(fight.fighter2.name)} <span class="stats-icon">📊</span></div>
                         <div class="fighter-record">${escapeHTML(fight.fighter2.record)}</div>
-                        <div class="predict-hint">Tap to Predict</div>
+                        <div class="predict-hint">Tap 📊 for Stats, Card to Predict</div>
                     </div>
                 </div>
                 
@@ -631,6 +681,61 @@
                 </div>
             `;
             return card;
+        }
+
+        // 🆕 Fighter Profile Modal Functions
+        async function openFighterProfile(fighterName, event) {
+            if (event) event.stopPropagation(); // Prevent triggering parent card's openPrediction
+            
+            const modal = document.getElementById('fighter-modal');
+            const nameEl = document.getElementById('modal-fighter-name');
+            const statsEl = document.getElementById('modal-fighter-stats');
+            const historyEl = document.getElementById('modal-fighter-history');
+            
+            modal.style.display = 'flex';
+            nameEl.textContent = fighterName;
+            statsEl.innerHTML = '<p style="text-align:center; width:100%; color:#888;">⏳ Loading stats...</p>';
+            historyEl.innerHTML = '';
+
+            try {
+                // 🚀 HIGH TRAFFIC: API limits to last 20 fights automatically
+                const response = await fetch(`/api/fights/fighter-history?name=${encodeURIComponent(fighterName)}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const { stats, history } = data.data;
+                    statsEl.innerHTML = `
+                        <div class="stat-box"><div class="stat-value win">${stats.wins}</div><div class="stat-label">Wins</div></div>
+                        <div class="stat-box"><div class="stat-value loss">${stats.losses}</div><div class="stat-label">Losses</div></div>
+                        <div class="stat-box"><div class="stat-value draw">${stats.draws}</div><div class="stat-label">Draws</div></div>
+                        <div class="stat-box"><div class="stat-value">${stats.total}</div><div class="stat-label">Total</div></div>
+                    `;
+                    
+                    if (history.length === 0) {
+                        historyEl.innerHTML = '<p style="text-align:center; color:#888; padding: 20px;">No past fights recorded yet.</p>';
+                    } else {
+                        historyEl.innerHTML = history.map(h => `
+                            <div class="history-item">
+                                <div>
+                                    <div class="history-opponent">vs ${escapeHTML(h.opponent)}</div>
+                                    <div class="history-date">${new Date(h.date).toLocaleDateString()}</div>
+                                </div>
+                                <div class="history-result ${h.result}">${h.result}</div>
+                            </div>
+                        `).join('');
+                    }
+                } else {
+                    historyEl.innerHTML = '<p style="text-align:center; color:#e94560;">Failed to load history.</p>';
+                }
+            } catch (error) {
+                console.error('Fighter profile error:', error);
+                historyEl.innerHTML = '<p style="text-align:center; color:#e94560;">Network error.</p>';
+            }
+        }
+
+        function closeFighterProfile(event) {
+            if (event && event.target !== event.currentTarget && !event.target.classList.contains('close-modal')) return;
+            document.getElementById('fighter-modal').style.display = 'none';
         }
 
         // 🆕 Prediction Flow Functions
