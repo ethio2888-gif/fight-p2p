@@ -184,6 +184,20 @@
         }
         .fighter:hover .fighter-name { color: #ffd700; }
         
+        /* 🆕 Winner/Loser Styling for Finished Fights */
+        .winner-glow {
+            border: 2px solid #ffd700 !important;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.4) !important;
+            background: rgba(255, 215, 0, 0.05) !important;
+        }
+        .winner-glow .fighter-name {
+            color: #ffd700 !important;
+        }
+        .loser-dim {
+            opacity: 0.5;
+            filter: grayscale(80%);
+        }
+        
         .fighter-photo { 
             font-size: 3.5em; 
             margin-bottom: 8px; 
@@ -443,9 +457,15 @@
             </div>
         </div>
 
-        <div class="fights-section">
+        <!-- 🆕 Split into Two Sections -->
+        <div id="upcoming-section" class="fights-section">
             <h2 class="section-title">🔥 Upcoming Fights</h2>
-            <div id="fights-container"></div>
+            <div id="upcoming-fights-container"></div>
+        </div>
+
+        <div id="finished-section" class="fights-section" style="display: none;">
+            <h2 class="section-title">🏁 Recently Finished</h2>
+            <div id="finished-fights-container"></div>
         </div>
 
         <footer>
@@ -582,10 +602,14 @@
             loadFights(); 
         }
 
-        // 🚀 HIGH TRAFFIC: Robust filtering
+        // 🚀 HIGH TRAFFIC: Robust filtering & 24-hour auto-hide logic
         async function loadFights() {
-            const container = document.getElementById('fights-container');
-            container.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">⏳ Loading fights from database...</p>';
+            const upcomingContainer = document.getElementById('upcoming-fights-container');
+            const finishedContainer = document.getElementById('finished-fights-container');
+            
+            upcomingContainer.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">⏳ Loading fights from database...</p>';
+            finishedContainer.innerHTML = '';
+
             try {
                 const response = await fetch('/api/fights');
                 if (!response.ok) throw new Error(`Server returned ${response.status}`);
@@ -598,27 +622,46 @@
                     });
                 }
 
-                if (Array.isArray(fights) && fights.length > 0) {
-                    displayFights(fights);
+                const upcomingFights = fights.filter(f => f.status === 'upcoming' || f.status === 'live');
+                
+                // 🆕 Keep finished fights only if they finished within the last 24 hours
+                const finishedFights = fights.filter(f => {
+                    if (f.status === 'finished' && f.finishedAt) {
+                        const hoursSinceFinish = (Date.now() - new Date(f.finishedAt).getTime()) / (1000 * 60 * 60);
+                        return hoursSinceFinish <= 24; 
+                    }
+                    return false;
+                });
+
+                // Render Upcoming
+                if (upcomingFights.length > 0) {
+                    document.getElementById('upcoming-section').style.display = 'block';
+                    upcomingContainer.innerHTML = '';
+                    upcomingFights.forEach(fight => {
+                        upcomingContainer.appendChild(createFightCard(fight));
+                    });
                 } else {
-                    container.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">No upcoming fights for this organization at the moment.</p>';
+                    document.getElementById('upcoming-section').style.display = 'none';
                 }
+
+                // Render Finished
+                if (finishedFights.length > 0) {
+                    document.getElementById('finished-section').style.display = 'block';
+                    finishedContainer.innerHTML = '';
+                    finishedFights.forEach(fight => {
+                        finishedContainer.appendChild(createFightCard(fight));
+                    });
+                } else {
+                    document.getElementById('finished-section').style.display = 'none';
+                }
+
             } catch (error) {
                 console.error('Error loading fights:', error);
-                container.innerHTML = `<p style="text-align:center; color:#e94560; padding:20px;">⚠️ Failed to load fights.<br><small>Check console (F12) for details.</small></p>`;
+                upcomingContainer.innerHTML = `<p style="text-align:center; color:#e94560; padding:20px;">⚠️ Failed to load fights.<br><small>Check console (F12) for details.</small></p>`;
             }
         }
 
-        function displayFights(fights) {
-            const container = document.getElementById('fights-container');
-            container.innerHTML = '';
-            fights.forEach(fight => {
-                const card = createFightCard(fight);
-                container.appendChild(card);
-            });
-        }
-
-        // 🆕 New Clean Card Structure with Click-to-Predict & Comments
+        // 🆕 New Clean Card Structure with Winner Highlighting & Comments
         function createFightCard(fight) {
             const card = document.createElement('div');
             card.className = 'fight-card glass-panel';
@@ -633,8 +676,33 @@
                 statusText = '🏁 FINISHED';
             }
 
-            // ✅ UI FIX: Shortened hint text
-            const hintHtml = `<div class="predict-hint">Click to Predict</div>`;
+            // Determine winner for styling
+            let fighter1Class = '';
+            let fighter2Class = '';
+            let hintHtml = `<div class="predict-hint">Click to Predict</div>`;
+
+            if (fight.status === 'finished') {
+                hintHtml = ''; // No predict hint for finished fights
+                if (fight.winner === 'red') {
+                    fighter1Class = 'winner-glow';
+                    fighter2Class = 'loser-dim';
+                } else if (fight.winner === 'blue') {
+                    fighter2Class = 'winner-glow';
+                    fighter1Class = 'loser-dim';
+                }
+            }
+
+            // Check if comments should be closed (finished > 24 hours ago)
+            let commentsClosed = false;
+            if (fight.status === 'finished' && fight.finishedAt) {
+                const hoursSinceFinish = (Date.now() - new Date(fight.finishedAt).getTime()) / (1000 * 60 * 60);
+                if (hoursSinceFinish > 24) {
+                    commentsClosed = true;
+                }
+            }
+
+            const clickAction = fight.status !== 'finished' ? `onclick="openPrediction('${fight._id}', 'red', '${escapeHTML(fight.fighter1.name)}')"` : '';
+            const clickAction2 = fight.status !== 'finished' ? `onclick="openPrediction('${fight._id}', 'blue', '${escapeHTML(fight.fighter2.name)}')"` : '';
 
             card.innerHTML = `
                 <div class="fight-header">
@@ -642,14 +710,14 @@
                     <span class="fight-date">${new Date(fight.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                 </div>
                 <div class="matchup-container">
-                    <div class="fighter" onclick="openPrediction('${fight._id}', 'red', '${escapeHTML(fight.fighter1.name)}')">
+                    <div class="fighter ${fighter1Class}" ${clickAction}>
                         <div class="fighter-photo" onclick="openFighterProfile('${escapeHTML(fight.fighter1.name)}', event)">${renderFighterPhoto(fight.fighter1.photo)}</div>
                         <div class="fighter-name" onclick="openFighterProfile('${escapeHTML(fight.fighter1.name)}', event)">${escapeHTML(fight.fighter1.name)} <span class="stats-icon">📊</span></div>
                         <div class="fighter-record">${escapeHTML(fight.fighter1.record)}</div>
                         ${hintHtml}
                     </div>
                     <div class="vs-badge">VS</div>
-                    <div class="fighter" onclick="openPrediction('${fight._id}', 'blue', '${escapeHTML(fight.fighter2.name)}')">
+                    <div class="fighter ${fighter2Class}" ${clickAction2}>
                         <div class="fighter-photo" onclick="openFighterProfile('${escapeHTML(fight.fighter2.name)}', event)">${renderFighterPhoto(fight.fighter2.photo)}</div>
                         <div class="fighter-name" onclick="openFighterProfile('${escapeHTML(fight.fighter2.name)}', event)">${escapeHTML(fight.fighter2.name)} <span class="stats-icon">📊</span></div>
                         <div class="fighter-record">${escapeHTML(fight.fighter2.record)}</div>
@@ -657,6 +725,7 @@
                     </div>
                 </div>
                 
+                ${fight.status !== 'finished' ? `
                 <div id="prediction-panel-${fight._id}" class="prediction-panel" style="display: none;">
                     <div class="prediction-header">
                         <span>Predicting for: <strong id="selected-fighter-name-${fight._id}"></strong></span>
@@ -676,13 +745,14 @@
                     <button class="btn-confirm-prediction" onclick="submitPrediction('${fight._id}')">Confirm Prediction</button>
                     <div id="message-${fight._id}" class="message"></div>
                 </div>
+                ` : ''}
 
                 <div class="comments-section">
                     <button class="btn-toggle-comments" onclick="toggleComments('${fight._id}', '${fight.status}')">
                         💬 <span id="comment-count-${fight._id}">Comments</span>
                     </button>
                     <div id="comments-container-${fight._id}" style="display: none; margin-top: 15px;">
-                        ${fight.status === 'finished' ? 
+                        ${commentsClosed || fight.status === 'finished' ? 
                             `<div class="comments-closed-msg">🏁 This fight has ended. Comments are closed, but you can still read the history.</div>` : 
                             `<div id="comment-form-${fight._id}" style="display: none; margin-bottom: 15px;">
                                 <textarea id="comment-text-${fight._id}" class="comment-textarea" placeholder="Write a comment..."></textarea>
@@ -852,7 +922,6 @@
             if (container.style.display === 'none') {
                 container.style.display = 'block';
                 
-                // ✅ COMMENT LIFECYCLE FIX: If finished, hide form, show closed message (already handled in HTML template)
                 if (fightStatus !== 'finished' && token && username) {
                     if(form) form.style.display = 'block';
                 } else if (fightStatus !== 'finished') {
