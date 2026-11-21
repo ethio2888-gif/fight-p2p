@@ -14,6 +14,8 @@
       --text-muted: #a0a0a0;
       --success: #00c853;
       --warning: #ffd600;
+      --gold: #ffd700;
+      --gold-dark: #ff8c00;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
@@ -34,12 +36,11 @@
       margin-top: 20px;
     }
 
-    /* 🆕 ቀላል እና ጽዳት ያለው የመመለሻ ቀስት (Back Arrow) */
     .back-btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 44px; /* ለሞባይል ተስማሚ የንክኪ ስፋት */
+      width: 44px;
       height: 44px;
       color: var(--text);
       text-decoration: none;
@@ -52,7 +53,7 @@
     }
     .back-btn:hover {
       background: rgba(255, 255, 255, 0.15);
-      transform: translateX(-4px); /* ወደ ኋላ የመሄድ ስሜት ይሰጣል */
+      transform: translateX(-4px);
     }
 
     .header {
@@ -113,6 +114,61 @@
     .balance { color: var(--success); }
     .verified { color: var(--success); }
     .unverified { color: var(--warning); }
+
+    /* 🆕 Daily Bonus Section Styles */
+    .bonus-section {
+      margin: 20px 0;
+      padding: 20px;
+      background: rgba(255, 215, 0, 0.05);
+      border: 1px dashed rgba(255, 215, 0, 0.3);
+      border-radius: 12px;
+      text-align: center;
+    }
+
+    .bonus-title {
+      color: var(--gold);
+      font-weight: 700;
+      font-size: 1rem;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .bonus-btn {
+      background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+      color: #0a0a12;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.3s;
+      width: 100%;
+    }
+
+    .bonus-btn:hover:not(:disabled) {
+      filter: brightness(1.1);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+    }
+
+    .bonus-btn:disabled {
+      background: #1a1a25;
+      color: #555;
+      cursor: not-allowed;
+      transform: none;
+      border: 1px solid #333;
+    }
+
+    .bonus-message {
+      margin-top: 10px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      min-height: 1.2em;
+    }
 
     .edit-section {
       margin-top: 25px;
@@ -199,7 +255,6 @@
 <body>
 
   <div class="container">
-    <!-- 🆕 ቀላል የመመለሻ ቀስት (ወደ ዋና ገጽ ይመልሳል) -->
     <a href="/" class="back-btn" aria-label="Back to Home">←</a>
 
     <div class="header">
@@ -221,6 +276,13 @@
       <div class="info-row">
         <span class="info-label">ቀሪ ሂሳብ</span>
         <span class="info-value balance" id="displayBalance">0 ፖይንት</span>
+      </div>
+
+      <!-- 🆕 Daily Bonus Section (Moved from Home) -->
+      <div id="bonusSection" class="bonus-section" style="display: none;">
+        <div class="bonus-title">🎁 የዕለት ተዕለት ሽልማት</div>
+        <button id="claimBonusBtn" class="bonus-btn" onclick="claimDailyBonus()">Claim Daily Bonus (+50 Points)</button>
+        <p id="bonusMessage" class="bonus-message"></p>
       </div>
 
       <div class="info-row">
@@ -247,7 +309,10 @@
   <script>
     const API_URL = window.location.origin; 
 
-    document.addEventListener('DOMContentLoaded', loadProfile);
+    document.addEventListener('DOMContentLoaded', () => {
+      loadProfile();
+      checkDailyBonusStatus();
+    });
 
     async function loadProfile() {
       const token = localStorage.getItem('token');
@@ -299,6 +364,94 @@
       }
     }
 
+    // 🆕 Check Daily Bonus Status
+    async function checkDailyBonusStatus() {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      try {
+        const response = await fetch('/api/daily-bonus/status', { 
+          headers: { 'Authorization': `Bearer ${token}` } 
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          const section = document.getElementById('bonusSection');
+          const btn = document.getElementById('claimBonusBtn');
+          const msg = document.getElementById('bonusMessage');
+          
+          section.style.display = 'block';
+          
+          if (data.isReady) {
+            btn.disabled = false;
+            btn.textContent = '🎁 Claim Daily Bonus (+50 Points)';
+            msg.textContent = '';
+          } else {
+            btn.disabled = true;
+            btn.textContent = '🎁 Bonus Claimed';
+            msg.textContent = `Next bonus in ${data.hoursLeft}h`;
+          }
+        }
+      } catch (error) {
+        console.error('Bonus status error:', error);
+      }
+    }
+
+    // 🆕 Claim Daily Bonus
+    async function claimDailyBonus() {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login.html';
+        return;
+      }
+
+      const btn = document.getElementById('claimBonusBtn');
+      const msg = document.getElementById('bonusMessage');
+      
+      btn.disabled = true;
+      btn.textContent = '⏳ Processing...';
+
+      try {
+        const response = await fetch('/api/daily-bonus/claim', {
+          method: 'POST',
+          headers: { 
+            'Content-Type': 'application/json', 
+            'Authorization': `Bearer ${token}` 
+          }
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          // 🚀 HIGH TRAFFIC: Update balance in localStorage & UI instantly
+          localStorage.setItem('balance', data.newBalance);
+          document.getElementById('displayBalance').textContent = `${data.newBalance} ፖይንት`;
+          
+          btn.textContent = '🎁 Bonus Claimed';
+          msg.textContent = `✅ ${data.message || '+50 Points added!'}`;
+          msg.style.color = 'var(--success)';
+          
+          showMessage('✅ ዕለታዊ ሽልማት ተቀብልሃል!', 'success');
+          
+          setTimeout(() => {
+            msg.textContent = '';
+            checkDailyBonusStatus();
+          }, 3000);
+        } else {
+          btn.disabled = false;
+          btn.textContent = '🎁 Claim Daily Bonus (+50 Points)';
+          msg.textContent = `❌ ${data.message || 'Failed'}`;
+          msg.style.color = 'var(--primary)';
+        }
+      } catch (error) {
+        console.error('Claim bonus error:', error);
+        btn.disabled = false;
+        btn.textContent = '🎁 Claim Daily Bonus (+50 Points)';
+        msg.textContent = '❌ Network error.';
+        msg.style.color = 'var(--primary)';
+      }
+    }
+
     async function updateProfile() {
       const newUsername = document.getElementById('newUsername').value.trim();
       const token = localStorage.getItem('token');
@@ -323,6 +476,7 @@
         if (response.ok) {
           showMessage('ፕሮፋይል በተሳካ ሁኔታ ተዘምኗል!', 'success');
           document.getElementById('newUsername').value = '';
+          localStorage.setItem('username', data.user.username);
           setTimeout(() => loadProfile(), 1000); 
         } else {
           showMessage(data.message || 'ስም ማዘመን አልተሳካም', 'error');
