@@ -5,7 +5,7 @@ const fightSchema = new mongoose.Schema({
   organization: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Organization',
-    required: false // ለአሁኑ ያሉ ፋይቶች እንዳይሰበሩ optional አድርጌዋለሁ፣ ግን አዲስ ሲጨመር መምረጥ ይገባል
+    required: false 
   },
   fighter1: {
     name: { type: String, required: true, trim: true },
@@ -30,6 +30,12 @@ const fightSchema = new mongoose.Schema({
     type: String, 
     default: null 
   },
+  // 🆕 ፋይቱ የተጠናቀቀበትን ሰዓት የሚያስቀምጥ መስክ (ለ24 ሰዓት ኮሜንት እና Auto-hide ለማስላት)
+  finishedAt: {
+    type: Date,
+    default: null,
+    index: true // 🚀 HIGH TRAFFIC: ፈጣን ፍለጋ እና ማጣራት (Filtering) እንዲቻል
+  },
   addedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -42,6 +48,7 @@ const fightSchema = new mongoose.Schema({
 // 🚀 HIGH TRAFFIC: Add indexes for ultra-fast querying
 fightSchema.index({ status: 1, date: 1 });
 fightSchema.index({ addedBy: 1 });
-fightSchema.index({ organization: 1 }); // 🆕 ለድርጅት ፍልተር ፈጣን እንዲሆን
+fightSchema.index({ organization: 1 }); 
+fightSchema.index({ finishedAt: 1 }); // 🆕 ለጊዜ ማጣራት (Time-based filtering)
 
 module.exports = mongoose.model('Fight', fightSchema);
