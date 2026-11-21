@@ -73,26 +73,6 @@
         }
         .tagline { color: #888; font-size: 1em; }
 
-        .daily-bonus-container {
-            text-align: center;
-            margin-bottom: 25px;
-            padding: 20px;
-            background: rgba(255, 215, 0, 0.03);
-            border: 1px dashed rgba(255, 215, 0, 0.3);
-            border-radius: 16px;
-        }
-        .bonus-btn {
-            background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%);
-            color: #0a0a12;
-            font-size: 1em;
-            padding: 12px 28px;
-            border: none;
-            border-radius: 12px;
-            font-weight: 800;
-            font-family: 'Montserrat', sans-serif;
-        }
-        .bonus-btn:disabled { background: #1a1a25; color: #555; border: 1px solid #333; cursor: not-allowed; }
-
         .organizations-section { margin-bottom: 30px; }
         .org-scroll-container {
             display: flex;
@@ -122,8 +102,8 @@
             box-shadow: 0 4px 12px rgba(255, 215, 0, 0.15);
         }
         .org-logo {
-            width: 45px;
-            height: 45px;
+            width: 50px; /* 🆕 Slightly larger, definitely not smaller */
+            height: 50px;
             object-fit: contain;
             margin-bottom: 8px;
             border-radius: 50%;
@@ -186,33 +166,50 @@
             background: rgba(0, 0, 0, 0.2);
             border-radius: 16px;
             padding: 20px 10px;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
             border: 1px solid rgba(255, 255, 255, 0.03);
         }
         .fighter { 
             flex: 1 !important; 
             text-align: center !important; 
-            padding: 5px !important;
+            padding: 10px 5px !important;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            border-radius: 12px;
         }
+        .fighter:hover {
+            transform: scale(1.05);
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .fighter:hover .fighter-name { color: #ffd700; }
+        
         .fighter-photo { 
-            font-size: 3em; 
+            font-size: 3.5em; 
             margin-bottom: 8px; 
             filter: drop-shadow(0 4px 8px rgba(0,0,0,0.4)); 
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 80px;
+            min-height: 90px; /* 🆕 Ensured not smaller */
         }
         .fighter-photo img {
-            width: 80px;
-            height: 80px;
+            width: 90px; /* 🆕 Ensured not smaller */
+            height: 90px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid #ffd700;
             box-shadow: 0 4px 8px rgba(0,0,0,0.4);
         }
-        .fighter-name { font-family: 'Montserrat', sans-serif; font-size: 1.1em; font-weight: 800; color: #ffffff; margin-bottom: 4px; }
+        .fighter-name { font-family: 'Montserrat', sans-serif; font-size: 1.1em; font-weight: 800; color: #ffffff; margin-bottom: 4px; transition: color 0.2s; }
         .fighter-record { color: #888; font-size: 0.8em; font-weight: 500; background: rgba(255,255,255,0.05); display: inline-block; padding: 3px 10px; border-radius: 20px; }
+        .predict-hint {
+            font-size: 0.75em;
+            color: #ffd700;
+            margin-top: 8px;
+            opacity: 0.8;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
         
         .vs-badge { 
             font-family: 'Montserrat', sans-serif;
@@ -227,28 +224,64 @@
             flex-shrink: 0 !important;
         }
 
-        .prediction-section {
-            background: rgba(255, 255, 255, 0.02);
+        /* 🆕 New Clean Prediction Panel */
+        .prediction-panel {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            border-radius: 12px;
             padding: 20px;
-            border-radius: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 15px;
+            animation: slideDown 0.3s ease-out;
         }
-        .prediction-amount-selector { text-align: center; margin-bottom: 20px; }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .prediction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #ffd700;
+            font-weight: 600;
+        }
+        .close-prediction {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 1.2em;
+            cursor: pointer;
+            padding: 0 5px;
+            transition: color 0.2s;
+        }
+        .close-prediction:hover { color: #fff; }
+
+        .prediction-amount-selector { text-align: center; }
         .prediction-amount-selector label { color: #ffd700; font-weight: 600; display: block; margin-bottom: 12px; font-size: 0.85em; }
         
-        .quick-prediction-grid { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
+        .quick-prediction-grid { 
+            display: flex; 
+            gap: 8px; 
+            justify-content: center; 
+            margin-bottom: 12px; 
+            flex-wrap: wrap; 
+        }
         .quick-prediction-btn {
             background: rgba(255, 255, 255, 0.05);
             color: #e0e0e0;
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 8px 16px;
+            padding: 8px 14px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
             font-size: 0.9em;
             transition: all 0.2s;
         }
-        .quick-prediction-btn:hover, .quick-prediction-btn.active { background: rgba(255, 215, 0, 0.15); color: #ffd700; border-color: #ffd700; }
+        .quick-prediction-btn:hover, .quick-prediction-btn.active { 
+            background: rgba(255, 215, 0, 0.15); 
+            color: #ffd700; 
+            border-color: #ffd700; 
+        }
 
         .custom-prediction-input {
             width: 100%; max-width: 280px;
@@ -264,20 +297,23 @@
         }
         .custom-prediction-input:focus { outline: none; border-color: #ffd700; }
 
-        .prediction-buttons { display: flex; gap: 12px; justify-content: center; margin-top: 20px; }
-        .prediction-btn {
-            flex: 1; 
-            padding: 16px 15px;
-            border: none; border-radius: 12px;
-            font-size: 0.95em; font-weight: 800;
-            cursor: pointer; transition: all 0.3s;
-            text-transform: uppercase; 
-            font-family: 'Montserrat', sans-serif;
+        .btn-confirm-prediction {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #4ecca3 0%, #3fa890 100%);
+            color: #0a0a12;
+            border: none;
+            border-radius: 10px;
+            font-weight: 800;
+            font-size: 1em;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: all 0.3s;
         }
-        .prediction-btn-fighter1 { background: linear-gradient(135deg, #e94560 0%, #c73650 100%); color: white; }
-        .prediction-btn-fighter2 { background: linear-gradient(135deg, #ffd700 0%, #ff8c00 100%); color: #0a0a12; }
-        .prediction-btn:hover:not(:disabled) { transform: translateY(-2px); filter: brightness(1.1); }
-        .prediction-btn:disabled { background: #1a1a25; color: #444; cursor: not-allowed; transform: none; border: 1px solid #333; }
+        .btn-confirm-prediction:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+        }
 
         .message {
             margin-top: 15px; padding: 12px; border-radius: 10px;
@@ -331,10 +367,9 @@
 
         @media (max-width: 600px) {
             h1 { font-size: 2em; }
-            .fighter-photo { font-size: 2.5em; }
+            .fighter-photo { font-size: 3em; }
             .fighter-name { font-size: 0.95em; }
             .vs-badge { font-size: 1em !important; padding: 6px 12px !important; margin: 0 5px !important; }
-            .prediction-buttons { flex-direction: column; }
         }
     </style>
 </head>
@@ -350,10 +385,7 @@
             <p class="tagline">Premium Peer-to-Peer Boxing Match Predictions</p>
         </header>
 
-        <div id="daily-bonus-container" class="daily-bonus-container" style="display: none;">
-            <button id="claimBonusBtn" class="btn bonus-btn">🎁 Claim Daily Bonus (+50 Points)</button>
-            <p id="bonusMessage" style="margin-top: 12px; color: #888; font-size: 0.9em;"></p>
-        </div>
+        <!-- 🆕 Daily Bonus Removed from Home (Moved to Profile) -->
 
         <div id="ads-container" class="ads-container"></div>
 
@@ -407,6 +439,7 @@
         const isVerified = localStorage.getItem('isVerified') === 'true';
         let selectedOrgId = null; 
 
+        // 🔒 SECURITY FIRST: Prevent XSS by escaping HTML characters
         function escapeHTML(str) {
             if (str === null || str === undefined) return '';
             return String(str).replace(/[&<>'"]/g, tag => ({
@@ -429,11 +462,9 @@
             if (token && username) {
                 userInfoDiv.innerHTML = `Welcome, <a href="/profile.html">${escapeHTML(username)}</a>!`;
                 logoutBtn.style.display = 'block';
-                checkDailyBonusStatus();
             } else {
                 userInfoDiv.innerHTML = `Welcome, Guest!`;
                 logoutBtn.style.display = 'none';
-                disableAllPredictionButtons();
             }
         }
 
@@ -441,39 +472,6 @@
             localStorage.clear();
             sessionStorage.clear();
             window.location.href = '/login.html';
-        }
-
-        function disableAllPredictionButtons() {
-            document.querySelectorAll('.prediction-btn').forEach(btn => {
-                btn.disabled = true;
-                if (!btn.innerHTML.includes('LOGIN')) {
-                    btn.dataset.originalText = btn.innerHTML;
-                    btn.innerHTML = 'LOGIN TO PREDICT';
-                }
-            });
-        }
-
-        async function checkDailyBonusStatus() {
-            if (!token) return;
-            try {
-                const response = await fetch('/api/daily-bonus/status', { headers: { 'Authorization': `Bearer ${token}` } });
-                if (response.ok) {
-                    const data = await response.json();
-                    const container = document.getElementById('daily-bonus-container');
-                    const btn = document.getElementById('claimBonusBtn');
-                    const msg = document.getElementById('bonusMessage');
-                    container.style.display = 'block';
-                    if (data.isReady) {
-                        btn.disabled = false;
-                        btn.innerText = '🎁 Claim Daily Bonus (+50 Points)';
-                        msg.innerText = '';
-                    } else {
-                        btn.disabled = true;
-                        btn.innerText = '🎁 Bonus Claimed';
-                        msg.innerText = `Next bonus in ${data.hoursLeft}h`;
-                    }
-                }
-            } catch (error) { console.error('Bonus error:', error); }
         }
 
         async function loadOrganizations() {
@@ -520,7 +518,7 @@
             loadFights(); 
         }
 
-        // 🔒 SECURITY & 🚀 HIGH TRAFFIC: Robust filtering (handles both string ID and populated object)
+        // 🚀 HIGH TRAFFIC: Robust filtering
         async function loadFights() {
             const container = document.getElementById('fights-container');
             container.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">⏳ Loading fights from database...</p>';
@@ -553,30 +551,10 @@
             fights.forEach(fight => {
                 const card = createFightCard(fight);
                 container.appendChild(card);
-                setupPredictionButtons(card, fight);
             });
-            if (!token || !username) disableAllPredictionButtons();
         }
 
-        function setupPredictionButtons(card, fight) {
-            const quickButtons = card.querySelectorAll('.quick-prediction-btn');
-            const input = card.querySelector('.custom-prediction-input');
-            const predBtn1 = card.querySelector('.prediction-btn-fighter1');
-            const predBtn2 = card.querySelector('.prediction-btn-fighter2');
-            const msgDiv = card.querySelector('.message');
-
-            quickButtons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    quickButtons.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    input.value = btn.dataset.amount;
-                });
-            });
-
-            predBtn1.addEventListener('click', () => placePrediction(fight.fighter1.name, 'red', fight._id, msgDiv));
-            predBtn2.addEventListener('click', () => placePrediction(fight.fighter2.name, 'blue', fight._id, msgDiv));
-        }
-
+        // 🆕 New Clean Card Structure with Click-to-Predict
         function createFightCard(fight) {
             const card = document.createElement('div');
             card.className = 'fight-card glass-panel';
@@ -589,97 +567,138 @@
                     <span class="fight-date">${new Date(fight.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                 </div>
                 <div class="matchup-container">
-                    <div class="fighter">
+                    <div class="fighter" onclick="openPrediction('${fight._id}', 'red', '${escapeHTML(fight.fighter1.name)}')">
                         <div class="fighter-photo">${renderFighterPhoto(fight.fighter1.photo)}</div>
                         <div class="fighter-name">${escapeHTML(fight.fighter1.name)}</div>
                         <div class="fighter-record">${escapeHTML(fight.fighter1.record)}</div>
+                        <div class="predict-hint">Tap to Predict</div>
                     </div>
                     <div class="vs-badge">VS</div>
-                    <div class="fighter">
+                    <div class="fighter" onclick="openPrediction('${fight._id}', 'blue', '${escapeHTML(fight.fighter2.name)}')">
                         <div class="fighter-photo">${renderFighterPhoto(fight.fighter2.photo)}</div>
                         <div class="fighter-name">${escapeHTML(fight.fighter2.name)}</div>
                         <div class="fighter-record">${escapeHTML(fight.fighter2.record)}</div>
+                        <div class="predict-hint">Tap to Predict</div>
                     </div>
                 </div>
-                <div class="prediction-section">
+                
+                <div id="prediction-panel-${fight._id}" class="prediction-panel" style="display: none;">
+                    <div class="prediction-header">
+                        <span>Predicting for: <strong id="selected-fighter-name-${fight._id}"></strong></span>
+                        <button class="close-prediction" onclick="closePrediction('${fight._id}')">✕</button>
+                    </div>
                     <div class="prediction-amount-selector">
-                        <label>Select Prediction Amount (Min: 50, Max: 10,000)</label>
+                        <label>Select Amount (Min: 50, Max: 10,000)</label>
                         <div class="quick-prediction-grid">
-                            <button class="quick-prediction-btn" data-amount="50">50</button>
-                            <button class="quick-prediction-btn" data-amount="100">100</button>
-                            <button class="quick-prediction-btn" data-amount="200">200</button>
-                            <button class="quick-prediction-btn" data-amount="500">500</button>
-                            <button class="quick-prediction-btn" data-amount="1000">1000</button>
+                            <button class="quick-prediction-btn" onclick="setAmount('${fight._id}', 50)">50</button>
+                            <button class="quick-prediction-btn" onclick="setAmount('${fight._id}', 100)">100</button>
+                            <button class="quick-prediction-btn" onclick="setAmount('${fight._id}', 200)">200</button>
+                            <button class="quick-prediction-btn" onclick="setAmount('${fight._id}', 500)">500</button>
+                            <button class="quick-prediction-btn" onclick="setAmount('${fight._id}', 1000)">1000</button>
                         </div>
-                        <input type="number" class="custom-prediction-input" placeholder="Custom amount" min="50" max="10000" value="100">
+                        <input type="number" id="custom-amount-${fight._id}" class="custom-prediction-input" placeholder="Custom amount" min="50" max="10000" value="100">
                     </div>
-                    <div class="prediction-buttons">
-                        <button class="prediction-btn prediction-btn-fighter1">Predict ${escapeHTML(fight.fighter1.name)}</button>
-                        <button class="prediction-btn prediction-btn-fighter2">Predict ${escapeHTML(fight.fighter2.name)}</button>
-                    </div>
-                    <div class="message"></div>
+                    <button class="btn-confirm-prediction" onclick="submitPrediction('${fight._id}')">Confirm Prediction</button>
+                    <div id="message-${fight._id}" class="message"></div>
                 </div>
             `;
             return card;
         }
 
-        async function placePrediction(fighterName, fighterChoice, fightId, messageDiv) {
+        // 🆕 Prediction Flow Functions
+        function openPrediction(fightId, fighterChoice, fighterName) {
             if (!token || !username) {
-                alert('Please login first!');
+                alert('Please login first to predict!');
                 window.location.href = '/login.html';
                 return;
             }
-            const card = messageDiv.closest('.fight-card');
-            const predictionAmount = parseInt(card.querySelector('.custom-prediction-input').value);
-            const predBtn1 = card.querySelector('.prediction-btn-fighter1');
-            const predBtn2 = card.querySelector('.prediction-btn-fighter2');
+            
+            document.querySelectorAll('.prediction-panel').forEach(p => p.style.display = 'none');
+            
+            const panel = document.getElementById(`prediction-panel-${fightId}`);
+            if (panel) {
+                panel.style.display = 'block';
+                document.getElementById(`selected-fighter-name-${fightId}`).textContent = fighterName;
+                panel.dataset.fighterChoice = fighterChoice;
+                panel.dataset.fighterName = fighterName;
+                
+                const msgDiv = document.getElementById(`message-${fightId}`);
+                msgDiv.className = 'message';
+                msgDiv.style.display = 'none';
+                
+                panel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
 
-            if (isNaN(predictionAmount) || predictionAmount < 50) { showMessage(messageDiv, 'error', '❌ Minimum prediction is 50 points!'); return; }
-            if (predictionAmount > 10000) { showMessage(messageDiv, 'error', '❌ Maximum prediction is 10,000 points!'); return; }
-            if (userPoints < predictionAmount) { showMessage(messageDiv, 'error', '❌ Insufficient points!'); return; }
+        function closePrediction(fightId) {
+            const panel = document.getElementById(`prediction-panel-${fightId}`);
+            if (panel) panel.style.display = 'none';
+        }
 
-            if (predictionAmount > 5000 && !isVerified) {
-                showMessage(messageDiv, 'warning', '⚠️ Predictions over 5,000 points require ID verification. Please go to your Profile to verify.');
+        function setAmount(fightId, amount) {
+            const input = document.getElementById(`custom-amount-${fightId}`);
+            input.value = amount;
+            
+            const panel = document.getElementById(`prediction-panel-${fightId}`);
+            panel.querySelectorAll('.quick-prediction-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (parseInt(btn.textContent) === amount) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        async function submitPrediction(fightId) {
+            const panel = document.getElementById(`prediction-panel-${fightId}`);
+            const fighterChoice = panel.dataset.fighterChoice;
+            const fighterName = panel.dataset.fighterName;
+            const amount = parseInt(document.getElementById(`custom-amount-${fightId}`).value);
+            const msgDiv = document.getElementById(`message-${fightId}`);
+
+            if (isNaN(amount) || amount < 50) { 
+                showMessageLocal(msgDiv, 'error', '❌ Minimum prediction is 50 points!'); 
+                return; 
+            }
+            if (amount > 10000) { 
+                showMessageLocal(msgDiv, 'error', '❌ Maximum prediction is 10,000 points!'); 
+                return; 
+            }
+            if (userPoints < amount) { 
+                showMessageLocal(msgDiv, 'error', '❌ Insufficient points!'); 
+                return; 
+            }
+            if (amount > 5000 && !isVerified) {
+                showMessageLocal(msgDiv, 'warning', '⚠️ Predictions over 5,000 points require ID verification. Please go to your Profile to verify.');
                 return;
             }
 
-            showMessage(messageDiv, 'success', `⏳ Processing ${predictionAmount} points...`);
+            showMessageLocal(msgDiv, 'success', '⏳ Processing...');
 
             try {
                 const response = await fetch('/api/bets/create', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ eventId: fightId, fighterChoice, amount: predictionAmount })
+                    body: JSON.stringify({ eventId: fightId, fighterChoice, amount })
                 });
                 const data = await response.json();
                 if (response.ok) {
-                    userPoints = data.newBalance || (userPoints - predictionAmount);
+                    userPoints = data.newBalance || (userPoints - amount);
                     localStorage.setItem('balance', userPoints);
-                    showMessage(messageDiv, 'success', `✅ Prediction placed on ${escapeHTML(fighterName)}!`);
+                    showMessageLocal(msgDiv, 'success', `✅ Prediction placed on ${fighterName}!`);
                     
-                    predBtn1.disabled = true;
-                    predBtn2.disabled = true;
-                    predBtn1.innerText = 'Prediction Placed';
-                    predBtn2.innerText = 'Prediction Placed';
-                    predBtn1.style.background = '#1a1a25';
-                    predBtn1.style.color = '#444';
-                    predBtn1.style.border = '1px solid #333';
-                    predBtn2.style.background = '#1a1a25';
-                    predBtn2.style.color = '#444';
-                    predBtn2.style.border = '1px solid #333';
-                    
+                    panel.innerHTML = '<div style="text-align:center; color:#4ecca3; padding: 20px; font-weight:bold;">✅ Prediction Successfully Placed!</div>';
                     setTimeout(() => window.location.reload(), 1500);
                 } else {
-                    showMessage(messageDiv, 'error', '❌ ' + (data.message || 'Prediction failed'));
+                    showMessageLocal(msgDiv, 'error', '❌ ' + (data.message || 'Prediction failed'));
                 }
             } catch (error) {
-                showMessage(messageDiv, 'error', '❌ Network error.');
+                showMessageLocal(msgDiv, 'error', '❌ Network error.');
             }
         }
 
-        function showMessage(element, type, text) {
+        function showMessageLocal(element, type, text) {
+            element.textContent = text; // 🔒 Security: textContent prevents XSS
             element.className = `message ${type}`;
-            element.innerText = text;
             element.style.display = 'block';
             setTimeout(() => { element.style.display = 'none'; }, 4000);
         }
@@ -719,37 +738,6 @@
             loadOrganizations(); 
             loadFights();
             loadAds();
-            const claimBtn = document.getElementById('claimBonusBtn');
-            if (claimBtn) {
-                claimBtn.addEventListener('click', async () => {
-                    claimBtn.disabled = true;
-                    claimBtn.innerText = '⏳ Processing...';
-                    try {
-                        const response = await fetch('/api/daily-bonus/claim', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
-                        });
-                        const data = await response.json();
-                        if (response.ok) {
-                            userPoints = data.newBalance;
-                            localStorage.setItem('balance', userPoints);
-                            claimBtn.innerText = '🎁 Bonus Claimed';
-                            document.getElementById('bonusMessage').innerText = `✅ ${data.message}`;
-                            document.getElementById('bonusMessage').style.color = '#4ecca3';
-                            setTimeout(() => window.location.reload(), 1500);
-                        } else {
-                            claimBtn.disabled = false;
-                            claimBtn.innerText = '🎁 Claim Daily Bonus (+50 Points)';
-                            document.getElementById('bonusMessage').innerText = `❌ ${data.message}`;
-                            document.getElementById('bonusMessage').style.color = '#e94560';
-                        }
-                    } catch (error) {
-                        claimBtn.disabled = false;
-                        claimBtn.innerText = '🎁 Claim Daily Bonus (+50 Points)';
-                        document.getElementById('bonusMessage').innerText = '❌ Network error.';
-                    }
-                });
-            }
         });
     </script>
 </body>
