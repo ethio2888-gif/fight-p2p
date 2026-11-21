@@ -44,7 +44,8 @@ const dailyBonusRoutes = require('./routes/dailyBonus');
 const fightRoutes = require('./routes/fights');
 const uploadRoutes = require('./routes/upload');
 const userRoutes = require('./routes/users'); 
-const organizationRoutes = require('./routes/organizations'); // 🆕 የድርጅቶች ራውት
+const organizationRoutes = require('./routes/organizations'); 
+const commentRoutes = require('./routes/comments'); // 🆕 የአስተያየት ራውት
 
 // 🔒 SECURITY FIRST: Import admin middleware to protect uploads
 const { requireAdmin } = require('./middleware/adminMiddleware');
@@ -57,7 +58,8 @@ app.use('/api/leaderboard', leaderboardRoutes);
 app.use('/api/daily-bonus', dailyBonusRoutes);
 app.use('/api/fights', fightRoutes);
 app.use('/api/users', userRoutes); 
-app.use('/api/organizations', organizationRoutes); // 🆕 የድርጅቶች ራውት
+app.use('/api/organizations', organizationRoutes); 
+app.use('/api/comments', commentRoutes); // 🆕 የአስተያየት ራውት
 
 // 🔒 SECURITY FIRST: Protect upload route so ONLY Admins can upload images (prevents Cloudinary quota abuse)
 app.use('/api/upload', requireAdmin, uploadRoutes); 
