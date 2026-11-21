@@ -34,7 +34,7 @@ router.get('/', async (req, res) => {
   try {
     // 🚀 HIGH TRAFFIC: Limit results & 🆕 Populate organization name for easy display
     const fights = await Fight.find()
-      .populate('organization', 'name') // 🆕 ይህ የድርጅቱን ስም ከ ID ጋር አያይዞ ያመጣል
+      .populate('organization', 'name') 
       .sort({ date: 1 })
       .limit(100) 
       .select('-bets');
@@ -45,10 +45,87 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 2. ADMIN ONLY: አዲስ ፋይት መጨመር
+// 🆕 2. PUBLIC: Get Fighter History and Stats (Auto-calculated from past fights)
+router.get('/fighter-history', async (req, res) => {
+  try {
+    const { name } = req.query;
+    if (!name || typeof name !== 'string') {
+      return res.status(400).json({ success: false, message: 'የፋይተር ስም ያስፈልጋል' });
+    }
+
+    const fighterName = name.trim();
+
+    // 🚀 HIGH TRAFFIC: Find finished fights involving this fighter, sorted by newest first
+    const fights = await Fight.find({
+      status: 'finished',
+      $or: [
+        { 'fighter1.name': fighterName },
+        { 'fighter2.name': fighterName }
+      ]
+    }).sort({ date: -1 }).limit(20); // Last 20 fights max
+
+    let wins = 0;
+    let losses = 0;
+    let draws = 0;
+    const history = [];
+
+    fights.forEach(fight => {
+      const isFighter1 = fight.fighter1.name === fighterName;
+      const opponent = isFighter1 ? fight.fighter2.name : fight.fighter1.name;
+      const opponentRecord = isFighter1 ? fight.fighter2.record : fight.fighter1.record;
+      
+      let result = 'Draw';
+      if (fight.winner === 'draw') {
+        draws++;
+        result = 'Draw';
+      } else if ((fight.winner === 'red' && isFighter1) || (fight.winner === 'blue' && !isFighter1)) {
+        wins++;
+        result = 'Win';
+      } else {
+        losses++;
+        result = 'Loss';
+      }
+
+      history.push({
+        date: fight.date,
+        opponent: opponent,
+        opponentRecord: opponentRecord,
+        result: result
+      });
+    });
+
+    // Check for upcoming fights
+    const upcomingFights = await Fight.find({
+      status: { $in: ['upcoming', 'live'] },
+      $or: [
+        { 'fighter1.name': fighterName },
+        { 'fighter2.name': fighterName }
+      ]
+    }).sort({ date: 1 }).limit(1);
+
+    res.json({
+      success: true,
+      data: {
+        name: fighterName,
+        stats: {
+          total: fights.length,
+          wins,
+          losses,
+          draws
+        },
+        history,
+        nextFight: upcomingFights.length > 0 ? upcomingFights[0] : null
+      }
+    });
+  } catch (error) {
+    console.error('Fighter history error:', error);
+    res.status(500).json({ success: false, message: 'የሰርቨር ስህተት' });
+  }
+});
+
+// 3. ADMIN ONLY: አዲስ ፋይት መጨመር
 router.post('/', requireAdmin, async (req, res) => {
   try {
-    // 🆕 organization ን ከ req.body እናነባለን
     const { fighter1, fighter2, date, status, organization } = req.body;
     
     // Sanitize inputs
@@ -65,7 +142,7 @@ router.post('/', requireAdmin, async (req, res) => {
       fighter2: cleanFighter2,
       date,
       status: status || 'upcoming',
-      organization: organization || null, // 🆕 የድርጅት መለያውን እዚህ እናስቀምጣለን
+      organization: organization || null, 
       addedBy: req.userId
     });
 
@@ -76,10 +153,9 @@ router.post('/', requireAdmin, async (req, res) => {
   }
 });
 
-// 3. ADMIN ONLY: ፋይት ማስተካከል (Update)
+// 4. ADMIN ONLY: ፋይት ማስተካከል (Update)
 router.put('/:id', requireAdmin, async (req, res) => {
   try {
-    // 🆕 organization ን ከ req.body እናነባለን
     const { fighter1, fighter2, date, status, winner, organization } = req.body;
     const updateData = {};
     
@@ -93,7 +169,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
     }
     if (status) updateData.status = status;
     if (winner) updateData.winner = winner;
-    if (organization !== undefined) updateData.organization = organization; // 🆕 የድርጅት መለያውን እናዘምናለን
+    if (organization !== undefined) updateData.organization = organization; 
 
     const fight = await Fight.findByIdAndUpdate(req.params.id, updateData, { new: true });
 
@@ -107,7 +183,7 @@ router.put('/:id', requireAdmin, async (req, res) => {
   }
 });
 
-// 4. ADMIN ONLY: ፋይት መሰረዝ (Delete)
+// 5. ADMIN ONLY: ፋይት መሰረዝ (Delete)
 router.delete('/:id', requireAdmin, async (req, res) => {
   try {
     // 🔒 SECURITY FIRST: Prevent deletion if there are active bets
@@ -132,7 +208,7 @@ router.delete('/:id', requireAdmin, async (req, res) => {
   }
 });
 
-// 5. ADMIN ONLY: አሸናፊ መምረጥ፣ ክፍያ ማከፋፈል፣ ክፍት ግምቶችን መመለስ እና ፋይቱን በራስ-ሰር መሰረዝ
+// 6. ADMIN ONLY: አሸናፊ መምረጥ፣ ክፍያ ማከፋፈል፣ ክፍት ግምቶችን መመለስ እና ፋይቱን በራስ-ሰር መሰረዝ
 router.post('/:id/declare-winner', requireAdmin, async (req, res) => {
   try {
     const { winner, winnerName } = req.body;
