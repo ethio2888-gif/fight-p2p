@@ -157,6 +157,7 @@
         .fight-date { background: rgba(255, 255, 255, 0.05); color: #ccc; padding: 6px 14px; border-radius: 20px; font-weight: 600; font-size: 0.8em; }
         .status-upcoming { color: #4ecca3; font-weight: 700; font-size: 0.8em; }
         .status-live { color: #e94560; font-weight: 800; animation: pulse 1.5s infinite; font-size: 0.8em; }
+        .status-finished { color: #888; font-weight: 700; font-size: 0.8em; }
 
         .matchup-container {
             display: flex !important;
@@ -329,6 +330,7 @@
         .btn-delete-comment:hover { opacity: 1; text-decoration: underline; }
         .comment-textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid rgba(255, 215, 0, 0.2); background: rgba(0, 0, 0, 0.3); color: #fff; font-size: 0.9em; outline: none; resize: vertical; min-height: 60px; font-family: 'Inter', sans-serif; margin-bottom: 10px; }
         .comment-textarea:focus { border-color: #ffd700; }
+        .comments-closed-msg { text-align: center; color: #888; font-size: 0.9em; padding: 15px; background: rgba(255,255,255,0.02); border-radius: 8px; border: 1px dashed rgba(255,255,255,0.1); }
 
         .message {
             margin-top: 15px; padding: 12px; border-radius: 10px;
@@ -620,8 +622,19 @@
         function createFightCard(fight) {
             const card = document.createElement('div');
             card.className = 'fight-card glass-panel';
-            const statusClass = fight.status === 'live' ? 'status-live' : 'status-upcoming';
-            const statusText = fight.status === 'live' ? '🔴 LIVE' : '📅 UPCOMING';
+            
+            let statusClass = 'status-upcoming';
+            let statusText = '📅 UPCOMING';
+            if (fight.status === 'live') {
+                statusClass = 'status-live';
+                statusText = '🔴 LIVE';
+            } else if (fight.status === 'finished') {
+                statusClass = 'status-finished';
+                statusText = '🏁 FINISHED';
+            }
+
+            // ✅ UI FIX: Shortened hint text
+            const hintHtml = `<div class="predict-hint">Click to Predict</div>`;
 
             card.innerHTML = `
                 <div class="fight-header">
@@ -633,14 +646,14 @@
                         <div class="fighter-photo" onclick="openFighterProfile('${escapeHTML(fight.fighter1.name)}', event)">${renderFighterPhoto(fight.fighter1.photo)}</div>
                         <div class="fighter-name" onclick="openFighterProfile('${escapeHTML(fight.fighter1.name)}', event)">${escapeHTML(fight.fighter1.name)} <span class="stats-icon">📊</span></div>
                         <div class="fighter-record">${escapeHTML(fight.fighter1.record)}</div>
-                        <div class="predict-hint">Tap 📊 for Stats, Card to Predict</div>
+                        ${hintHtml}
                     </div>
                     <div class="vs-badge">VS</div>
                     <div class="fighter" onclick="openPrediction('${fight._id}', 'blue', '${escapeHTML(fight.fighter2.name)}')">
                         <div class="fighter-photo" onclick="openFighterProfile('${escapeHTML(fight.fighter2.name)}', event)">${renderFighterPhoto(fight.fighter2.photo)}</div>
                         <div class="fighter-name" onclick="openFighterProfile('${escapeHTML(fight.fighter2.name)}', event)">${escapeHTML(fight.fighter2.name)} <span class="stats-icon">📊</span></div>
                         <div class="fighter-record">${escapeHTML(fight.fighter2.record)}</div>
-                        <div class="predict-hint">Tap 📊 for Stats, Card to Predict</div>
+                        ${hintHtml}
                     </div>
                 </div>
                 
@@ -665,15 +678,18 @@
                 </div>
 
                 <div class="comments-section">
-                    <button class="btn-toggle-comments" onclick="toggleComments('${fight._id}')">
+                    <button class="btn-toggle-comments" onclick="toggleComments('${fight._id}', '${fight.status}')">
                         💬 <span id="comment-count-${fight._id}">Comments</span>
                     </button>
                     <div id="comments-container-${fight._id}" style="display: none; margin-top: 15px;">
-                        <div id="comment-form-${fight._id}" style="display: none; margin-bottom: 15px;">
-                            <textarea id="comment-text-${fight._id}" class="comment-textarea" placeholder="Write a comment..."></textarea>
-                            <button class="btn-confirm-prediction" style="margin-top: 0; padding: 10px;" onclick="submitComment('${fight._id}')">Post Comment</button>
-                            <div id="comment-message-${fight._id}" class="message"></div>
-                        </div>
+                        ${fight.status === 'finished' ? 
+                            `<div class="comments-closed-msg">🏁 This fight has ended. Comments are closed, but you can still read the history.</div>` : 
+                            `<div id="comment-form-${fight._id}" style="display: none; margin-bottom: 15px;">
+                                <textarea id="comment-text-${fight._id}" class="comment-textarea" placeholder="Write a comment..."></textarea>
+                                <button class="btn-confirm-prediction" style="margin-top: 0; padding: 10px;" onclick="submitComment('${fight._id}')">Post Comment</button>
+                                <div id="comment-message-${fight._id}" class="message"></div>
+                            </div>`
+                        }
                         <div id="comments-list-${fight._id}" style="max-height: 300px; overflow-y: auto;">
                             <p style="text-align: center; color: #888; font-size: 0.9em;">⏳ Loading comments...</p>
                         </div>
@@ -685,7 +701,7 @@
 
         // 🆕 Fighter Profile Modal Functions
         async function openFighterProfile(fighterName, event) {
-            if (event) event.stopPropagation(); // Prevent triggering parent card's openPrediction
+            if (event) event.stopPropagation(); 
             
             const modal = document.getElementById('fighter-modal');
             const nameEl = document.getElementById('modal-fighter-name');
@@ -698,7 +714,6 @@
             historyEl.innerHTML = '';
 
             try {
-                // 🚀 HIGH TRAFFIC: API limits to last 20 fights automatically
                 const response = await fetch(`/api/fights/fighter-history?name=${encodeURIComponent(fighterName)}`);
                 const data = await response.json();
                 
@@ -830,19 +845,22 @@
         }
 
         // 🆕 Comments Flow Functions
-        async function toggleComments(fightId) {
+        async function toggleComments(fightId, fightStatus) {
             const container = document.getElementById(`comments-container-${fightId}`);
             const form = document.getElementById(`comment-form-${fightId}`);
             
             if (container.style.display === 'none') {
                 container.style.display = 'block';
-                if (token && username) {
-                    form.style.display = 'block';
-                } else {
-                    form.style.display = 'none';
+                
+                // ✅ COMMENT LIFECYCLE FIX: If finished, hide form, show closed message (already handled in HTML template)
+                if (fightStatus !== 'finished' && token && username) {
+                    if(form) form.style.display = 'block';
+                } else if (fightStatus !== 'finished') {
+                    if(form) form.style.display = 'none';
                     document.getElementById(`comments-list-${fightId}`).innerHTML = '<p style="text-align: center; color: #ffd700; font-size: 0.9em;">Please login to view and post comments.</p>';
                     return;
                 }
+                
                 await loadComments(fightId);
             } else {
                 container.style.display = 'none';
@@ -854,7 +872,6 @@
             list.innerHTML = '<p style="text-align: center; color: #888; font-size: 0.9em;">⏳ Loading comments...</p>';
             
             try {
-                // 🚀 HIGH TRAFFIC: Limit to 10 comments to keep payload small and fast
                 const response = await fetch(`/api/comments/${fightId}?limit=10`);
                 const data = await response.json();
                 
