@@ -32,10 +32,10 @@ const validateFightInput = (data) => {
 // 1. PUBLIC: ሁሉንም ፋይቶች ማግኘት (ለፊት-ኤንድ ማሳያ)
 router.get('/', async (req, res) => {
   try {
-    // 🚀 HIGH TRAFFIC: Limit results & 🆕 Populate organization name for easy display
+    // 🚀 HIGH TRAFFIC: Limit results & 🆕 Populate organization name
     const fights = await Fight.find()
       .populate('organization', 'name') 
-      .sort({ date: 1 })
+      .sort({ date: 1 }) // ቀጣይ ፋይቶች መጀመሪያ፣ የተጠናቀቁት መጨረሻ ላይ
       .limit(100) 
       .select('-bets');
     
@@ -62,7 +62,7 @@ router.get('/fighter-history', async (req, res) => {
         { 'fighter1.name': fighterName },
         { 'fighter2.name': fighterName }
       ]
-    }).sort({ date: -1 }).limit(20); // Last 20 fights max
+    }).sort({ date: -1 }).limit(20); 
 
     let wins = 0;
     let losses = 0;
@@ -94,7 +94,6 @@ router.get('/fighter-history', async (req, res) => {
       });
     });
 
-    // Check for upcoming fights
     const upcomingFights = await Fight.find({
       status: { $in: ['upcoming', 'live'] },
       $or: [
@@ -128,7 +127,6 @@ router.post('/', requireAdmin, async (req, res) => {
   try {
     const { fighter1, fighter2, date, status, organization } = req.body;
     
-    // Sanitize inputs
     const cleanFighter1 = { ...fighter1, name: fighter1.name.trim() };
     const cleanFighter2 = { ...fighter2, name: fighter2.name.trim() };
 
@@ -186,7 +184,6 @@ router.put('/:id', requireAdmin, async (req, res) => {
 // 5. ADMIN ONLY: ፋይት መሰረዝ (Delete)
 router.delete('/:id', requireAdmin, async (req, res) => {
   try {
-    // 🔒 SECURITY FIRST: Prevent deletion if there are active bets
     const activeBetsCount = await Bet.countDocuments({ 
       event: req.params.id, 
       status: { $in: ['open', 'matched'] } 
@@ -208,7 +205,7 @@ router.delete('/:id', requireAdmin, async (req, res) => {
   }
 });
 
-// 6. ADMIN ONLY: አሸናፊ መምረጥ፣ ክፍያ ማከፋፈል፣ ክፍት ግምቶችን መመለስ እና ፋይቱን በራስ-ሰር መሰረዝ
+// 6. ADMIN ONLY: አሸናፊ መምረጥ፣ ክፍያ ማከፋፈል፣ ክፍት ግምቶችን መመለስ እና ፋይቱን ማስተካከል (አይሰረዝም!)
 router.post('/:id/declare-winner', requireAdmin, async (req, res) => {
   try {
     const { winner, winnerName } = req.body;
@@ -219,9 +216,9 @@ router.post('/:id/declare-winner', requireAdmin, async (req, res) => {
       return res.status(404).json({ message: 'ፋይት አልተገኘም' });
     }
 
-    if (fight.winner === winner) {
+    if (fight.status === 'finished') {
       return res.status(400).json({ 
-        message: `አሸናፊው (${winnerName}) አስቀድሞ ተመርጧል። ግምቶች አንድ ጊዜ ብቻ ይከፈላሉ።` 
+        message: `ይህ ፋይት አስቀድሞ ተጠናቅቋል።` 
       });
     }
 
@@ -252,11 +249,15 @@ router.post('/:id/declare-winner', requireAdmin, async (req, res) => {
       }
     }
 
-    // ✅ 3. AUTO-DELETE
-    await Fight.findByIdAndDelete(fightId);
+    // ✅ 3. UPDATE FIGHT STATUS INSTEAD OF DELETING (ለ24 ሰዓት ኮሜንት እንዲኖር)
+    fight.status = 'finished';
+    fight.winner = winner;
+    fight.finishedAt = new Date(); // 🆕 የተጠናቀቀበትን ሰዓት ያስቀምጣል
+    
+    await fight.save();
 
     res.json({ 
-      message: `አሸናፊው ${winnerName} ተመርጧል። ${settledCount} የተጣመሩ ግምቶች ተከፍለዋል፣ እና ${refundedCount} ያልተጣመሩ ግምቶች ተመልሰዋል። ፋይቱ በራስ-ሰር ተሰርዟል።`,
+      message: `አሸናፊው ${winnerName} ተመርጧል። ${settledCount} የተጣመሩ ግምቶች ተከፍለዋል፣ እና ${refundedCount} ያልተጣመሩ ግምቶች ተመልሰዋል። ፋይቱ ወደ "Recently Finished" ተዛውሯል።`,
       settledCount,
       refundedCount
     });
