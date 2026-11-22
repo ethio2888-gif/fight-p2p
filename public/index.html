@@ -602,7 +602,7 @@
             loadFights(); 
         }
 
-        // 🚀 HIGH TRAFFIC: Robust filtering & 24-hour auto-hide logic
+        // 🚀 HIGH TRAFFIC: Robust filtering & 24-hour auto-hide logic with backward compatibility
         async function loadFights() {
             const upcomingContainer = document.getElementById('upcoming-fights-container');
             const finishedContainer = document.getElementById('finished-fights-container');
@@ -624,24 +624,25 @@
 
                 const upcomingFights = fights.filter(f => f.status === 'upcoming' || f.status === 'live');
                 
-                // 🆕 Keep finished fights only if they finished within the last 24 hours
+                // 🆕 Backward Compatibility: If finishedAt is missing, fallback to updatedAt
                 const finishedFights = fights.filter(f => {
-                    if (f.status === 'finished' && f.finishedAt) {
-                        const hoursSinceFinish = (Date.now() - new Date(f.finishedAt).getTime()) / (1000 * 60 * 60);
+                    if (f.status === 'finished') {
+                        const finishTime = f.finishedAt ? new Date(f.finishedAt).getTime() : new Date(f.updatedAt).getTime();
+                        const hoursSinceFinish = (Date.now() - finishTime) / (1000 * 60 * 60);
                         return hoursSinceFinish <= 24; 
                     }
                     return false;
                 });
 
-                // Render Upcoming
+                // Render Upcoming (Always show the section, even if empty)
+                document.getElementById('upcoming-section').style.display = 'block';
                 if (upcomingFights.length > 0) {
-                    document.getElementById('upcoming-section').style.display = 'block';
                     upcomingContainer.innerHTML = '';
                     upcomingFights.forEach(fight => {
                         upcomingContainer.appendChild(createFightCard(fight));
                     });
                 } else {
-                    document.getElementById('upcoming-section').style.display = 'none';
+                    upcomingContainer.innerHTML = '<p style="text-align:center; color:#888; padding:20px;">No upcoming fights at the moment. Check back soon!</p>';
                 }
 
                 // Render Finished
@@ -694,8 +695,9 @@
 
             // Check if comments should be closed (finished > 24 hours ago)
             let commentsClosed = false;
-            if (fight.status === 'finished' && fight.finishedAt) {
-                const hoursSinceFinish = (Date.now() - new Date(fight.finishedAt).getTime()) / (1000 * 60 * 60);
+            if (fight.status === 'finished') {
+                const finishTime = fight.finishedAt ? new Date(fight.finishedAt).getTime() : new Date(fight.updatedAt).getTime();
+                const hoursSinceFinish = (Date.now() - finishTime) / (1000 * 60 * 60);
                 if (hoursSinceFinish > 24) {
                     commentsClosed = true;
                 }
